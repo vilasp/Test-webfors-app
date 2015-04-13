@@ -20,4 +20,8 @@
 <asp:Content runat="server" ID="BodyContent" ContentPlaceHolderID="MainContent">
     <div id="drawing-area">
     </div>
+    <div id="drawing-area2">
+    </div>
+    <div id="sjärt">
+    </div>
 </asp:Content>
