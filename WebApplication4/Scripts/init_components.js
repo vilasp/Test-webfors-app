@@ -179,7 +179,7 @@ function getTestEdges() {
     var edge16 = { "to": "node11", "from": "node10"};
     var edge17 = { "to": "node11", "from": "node11"};
 
-    init_edges = [edge3, edge10, edge12, edge14, edge0, edge1, edge2, edge4, edge5, edge6, edge7, edge8, edge9, edge11, edge13, edge15, edge16, edge17];
+    init_edges = [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge13, edge14, edge15, edge16, edge17];
     return init_edges;
 }
 
@@ -200,28 +200,87 @@ Output:
     - A layered drawing of a graph
 
 **/
-function constructGraph(vertices,edges) {
+function constructGraph(vertices, edges) {
 
     var G = [vertices, edges];
 
+    //Label edges and build neighbor set
+    labelEdges(G);
+    var selfLoopEdges = setDegreeCountAndNeighbors(G);
+
+    var i = 0;
+   /* $.each(G[0], function () {
+        
+        if(this.neighborsIn !== undefined)
+            alert('Node ' + i + ' has in neighbors: ' + this.neighborsIn.join() + ' and the total indegree of ' + this.inDegree);
+        if (this.neighborsOut !== undefined)
+            alert('Node ' + i + ' has out neighbors: ' + this.neighborsOut.join() + ' and the total outdegree of ' + this.outDegree);
+        i++;
+    });*/
     //Step 1 - Contruct a FAS-set, returns a new graph GFas
-    var GFas = cycleRemoval(G);
+    //var GFas = cycleRemoval(G);
 
 
 
 };
 
+//Label each edge 
+function labelEdges(graph) {
+    var i = 0;
 
+    $.each(graph[1], function () {
+        this['label'] = 'edge' + i;
+        i++;
+    });
+    //return graph;
+};
+
+
+//Initialize a graph with edge neighbors and degree count
+function setDegreeCountAndNeighbors(graph) {
+
+    var selfLoopEdges = [];
+    var counter;
+
+    $.each(graph[0], function () {
+        var currentVertice = this;
+        counter = 0;
+        $.each(graph[1], function () {
+            if (this.from === this.to) {
+                var deepCopyElement = $.extend(true, [], graph[1][counter]);
+                selfLoopEdges.push(deepCopyElement)
+                graph[1].splice(counter, 1);
+            }
+
+            if (this.from === currentVertice.label) {
+                if (!currentVertice.hasOwnProperty('neighborsOut'))
+                    currentVertice['neighborsOut'] = [this.label];
+                else {
+                    currentVertice['neighborsOut'].push(this.label);
+                }
+            }
+
+            if(this.to === currentVertice.label){
+                if (!currentVertice.hasOwnProperty('neighborsIn'))
+                    currentVertice['neighborsIn'] = [this.label];
+                else {
+                    currentVertice['neighborsIn'].push(this.label);
+                }
+            }
+            counter++;
+        });
+        if (currentVertice['neighborsIn'] !== undefined ? currentVertice['inDegree'] = currentVertice.neighborsIn.length : 0);
+        if (currentVertice['neighborsOut'] !== undefined ? currentVertice['outDegree'] = currentVertice.neighborsOut.length : 0);
+    });
+    return selfLoopEdges;
+}
+
+//Initialize the cycle removal step
 function cycleRemoval(graph) {
     var newEdges = jQuery.extend(true, {}, graph[1]);
-    var newEdgesWithDegreeCount = setDegreeCount(newEdges);
+    //    var newEdgesWithDegreeCount = setDegreeCount(newEdges);
 };
 
-function setDegreeCount(edges) {
-    $.each(edges, function () {
-
-    });
-}
 /*********************** Berger and Shor ***********************/
 
 function checkSink(graph) {
