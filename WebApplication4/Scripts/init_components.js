@@ -345,7 +345,12 @@ function getVerticeWithLargestDegree() {
 
 //Removes a vertex from the given graph
 function removeVertex(graph,vertex){
-
+    //added some comments
+    $.each(graph[0], function () {
+        if (this.neighborsOut.length > 0 && this.neighboursIn.length === 0) {
+            sources.push(this);
+        }
+    });
 }
 
 //Removes edge from the given graph
