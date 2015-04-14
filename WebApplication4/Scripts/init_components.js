@@ -177,9 +177,10 @@ function getTestEdges() {
     var edge14 = { "to": "node6", "from": "node9"  };
     var edge15 = { "to": "node10", "from": "node9" };
     var edge16 = { "to": "node11", "from": "node10"};
-    var edge17 = { "to": "node11", "from": "node11"};
+    var edge17 = { "to": "node11", "from": "node11" };
+    var edge18 = { "to": "node10", "from": "node10" };
 
-    init_edges = [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge13, edge14, edge15, edge16, edge17];
+    init_edges = [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
     return init_edges;
 }
 
@@ -207,18 +208,10 @@ function constructGraph(vertices, edges) {
     //Label edges and build neighbor set
     labelEdges(G);
     var selfLoopEdges = setDegreeCountAndNeighbors(G);
-
-    var i = 0;
-   /* $.each(G[0], function () {
-        
-        if(this.neighborsIn !== undefined)
-            alert('Node ' + i + ' has in neighbors: ' + this.neighborsIn.join() + ' and the total indegree of ' + this.inDegree);
-        if (this.neighborsOut !== undefined)
-            alert('Node ' + i + ' has out neighbors: ' + this.neighborsOut.join() + ' and the total outdegree of ' + this.outDegree);
-        i++;
-    });*/
+    //prettyDebugPrint('printDegreeAndNeighbors',G)
+    
     //Step 1 - Contruct a FAS-set, returns a new graph GFas
-    //var GFas = cycleRemoval(G);
+    var GFas = cycleRemoval(G);
 
 
 
@@ -240,35 +233,35 @@ function labelEdges(graph) {
 function setDegreeCountAndNeighbors(graph) {
 
     var selfLoopEdges = [];
-    var counter;
+    var counter,thisTmp;
 
     $.each(graph[0], function () {
         var currentVertice = this;
-        counter = 0;
-        $.each(graph[1], function () {
-            if (this.from === this.to) {
+        for (var counter = 0; counter < graph[1].length; counter++) {
+            thisTmp = graph[1][counter];
+            if (thisTmp.from === thisTmp.to) {
                 var deepCopyElement = $.extend(true, [], graph[1][counter]);
                 selfLoopEdges.push(deepCopyElement)
                 graph[1].splice(counter, 1);
+                counter--;
             }
 
-            if (this.from === currentVertice.label) {
+            if (thisTmp.from === currentVertice.label) {
                 if (!currentVertice.hasOwnProperty('neighborsOut'))
-                    currentVertice['neighborsOut'] = [this.label];
+                    currentVertice['neighborsOut'] = [thisTmp.label];
                 else {
-                    currentVertice['neighborsOut'].push(this.label);
+                    currentVertice['neighborsOut'].push(thisTmp.label);
                 }
             }
 
-            if(this.to === currentVertice.label){
+            if (thisTmp.to === currentVertice.label) {
                 if (!currentVertice.hasOwnProperty('neighborsIn'))
-                    currentVertice['neighborsIn'] = [this.label];
+                    currentVertice['neighborsIn'] = [thisTmp.label];
                 else {
-                    currentVertice['neighborsIn'].push(this.label);
+                    currentVertice['neighborsIn'].push(thisTmp.label);
                 }
             }
-            counter++;
-        });
+        }
         if (currentVertice['neighborsIn'] !== undefined ? currentVertice['inDegree'] = currentVertice.neighborsIn.length : 0);
         if (currentVertice['neighborsOut'] !== undefined ? currentVertice['outDegree'] = currentVertice.neighborsOut.length : 0);
     });
@@ -277,16 +270,91 @@ function setDegreeCountAndNeighbors(graph) {
 
 //Initialize the cycle removal step
 function cycleRemoval(graph) {
+
+    //Do a deep copy of the graph to work with
     var newEdges = jQuery.extend(true, {}, graph[1]);
-    //    var newEdgesWithDegreeCount = setDegreeCount(newEdges);
+    var newVertices = jQuery.extend(true, {}, graph[0]);
+    var GCycleRemoval = [newVertices, newEdges];
+
+    //start the Berger and Shor algorithm
+    var topologicalOrdering = bergerAndShor(GCycleRemoval);
 };
 
-/*********************** Berger and Shor ***********************/
+/*********************** Berger and Shor ***********************
+Works by successively removing sources and sinks from the graph and placing
+them in separate sets. When no more sinks/ sources can be removed a vertex
+with largest degree is chosen. When no more vertices exist in the graph 
+the algorithm returns with a toplogical ordering of vertices.
+***************************************************************/
+function bergerAndShor(graph) {
 
-function checkSink(graph) {
+    //create empty sets, s1 = sources append here, s2 sinks prepend here
+    var s1 = []
+    var s2 = []
+
+    //Main loop : until graph is empty
+    while (graph[0].length > 0) {
+        var sources = getSources(graph);
+        var sinks = getSinks(graph);
+        
+        //Loop as long as there are sinks in the graph
+        while (sinks.length > 0) {
+
+        }
+
+        //Loop as long as there as sources in the graph
+        while (source.length > 0) {
+
+        }
+
+        //Choose a vertex with the largest degree, append to source set s1
+
+    }
 
 }
 
-function checkSource(graph) {
+//Loops through the set of vertices and checks if they only have out neighbors
+function getSinks(graph) {
+    var sinks = [];
+
+    $.each(graph[0],function () {
+        if()
+    });
+}
+
+function getSources(graph) {
 
 };
+
+function getVerticeWithLargestDegree() {
+
+};
+/************************************ End of Berger and Shor *******************/
+
+//Removes a vertex from the given graph
+function removeVertex(graph,vertex){
+
+}
+
+//Removes edge from the given graph
+function removeEdge(graph,edge){
+
+}
+
+
+
+//Printing function to see some debug messages
+function prettyDebugPrint(message, G) {
+
+    //Print all the neighbors and the degree of each vertex
+    if (message === 'printDegreeAndNeighbors') {
+        var i = 0;
+        $.each(G[0], function () {
+             if(this.neighborsIn !== undefined)
+                 alert('Node ' + i + ' has in neighbors: ' + this.neighborsIn.join() + ' and the total indegree of ' + this.inDegree);
+             if (this.neighborsOut !== undefined)
+                 alert('Node ' + i + ' has out neighbors: ' + this.neighborsOut.join() + ' and the total outdegree of ' + this.outDegree);
+             i++;
+         });
+    }
+}
