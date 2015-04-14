@@ -318,12 +318,24 @@ function getSinks(graph) {
     var sinks = [];
 
     $.each(graph[0],function () {
-        if()
+        if (this.neighborsIn.length > 0 && this.neighboursOut.length === 0) {
+            sinks.push(this);
+        }
     });
+
+    return sinks;
 }
 
 function getSources(graph) {
+    var sources = [];
 
+    $.each(graph[0], function () {
+        if (this.neighborsOut.length > 0 && this.neighboursIn.length === 0) {
+            sources.push(this);
+        }
+    });
+
+    return sources;
 };
 
 function getVerticeWithLargestDegree() {
