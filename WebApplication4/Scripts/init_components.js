@@ -179,8 +179,9 @@ function getTestEdges() {
     var edge16 = { "to": "node11", "from": "node10"};
     var edge17 = { "to": "node11", "from": "node11" };
     var edge18 = { "to": "node10", "from": "node10" };
+    var edge19 = { "to": "node5", "from": "node1" };
 
-    init_edges = [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
+    init_edges = [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge19, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
     return init_edges;
 }
 
@@ -205,9 +206,18 @@ function constructGraph(vertices, edges) {
 
     var G = [vertices, edges];
 
-    //Label edges and build neighbor set
+    //Label edges
     labelEdges(G);
-    var selfLoopEdges = setDegreeCountAndNeighbors(G);
+    
+    //Remove self loops
+    var selfLoopEdges = removeAndStoreSelfLoops(G);
+
+    //Set up neighbor lists and degree count
+    setDegreeCountAndNeighbors(G);
+
+    //Remove and store two loops
+    var twoLoopEdges = removeAndStoreTwoLoops(G);
+
     //prettyDebugPrint('printDegreeAndNeighbors',G)
     
     //Step 1 - Contruct a FAS-set, returns a new graph GFas
@@ -246,7 +256,7 @@ function removeAndStoreSelfLoops(graph) {
 }
 
 //Remove two-loops from the graph
-function removeAndStoreTwoLoops() {
+function removeAndStoreTwoLoops(graph) {
 
     var twoLoopEdges = [];
 
@@ -286,6 +296,7 @@ function removeAndStoreTwoLoops() {
                     var tmpDegree = to.outDegree;
                     to.outDegree = tmpDegree - 1;
 
+                    //Remove the reversed edge form the graph
                     var tmpEdge = jQuery.extend(true, {}, graph[1][index]);
                     tmpEdge.reversed = true;
                     twoLoopEdges.push(tmpEdge);
@@ -293,10 +304,10 @@ function removeAndStoreTwoLoops() {
                     index--;
                     break;
                 }
-
             }
         }
     };
+    return twoLoopEdges;
 }
 
 //Check if a edge already had a reversed brother
@@ -371,6 +382,18 @@ function bergerAndShor(graph) {
         
         //Loop as long as there are sinks in the graph
         while (sinks.length > 0) {
+            
+            //Take first sink from list
+            var tmpVertex = jQuery.extend(true, {}, sinks[0]);
+            sinks.splice(0, 1);
+            
+            //Remove vertex from graph
+            removeVertex(graph, tmpVertex);
+
+            $.merge(getPossiblyNewSinks(graph, tmpVertex), sinks);
+
+
+
 
         }
 
@@ -398,6 +421,15 @@ function getSinks(graph) {
     return sinks;
 }
 
+function getPossiblyNewSinks(graph,vertex) {
+    var possiblyNewSinks = [];
+
+    $.each(vertex.neighboursIn, function () {
+        if (this.neighborsIn.length > 0 && this.neighboursOut.length === 0)
+            possiblyNewSinks.push(this);
+    });
+}
+
 function getSources(graph) {
     var sources = [];
 
@@ -413,14 +445,29 @@ function getSources(graph) {
 function getVerticeWithLargestDegree() {
 
 };
+
+function addEdgeToFas(type,vertex){
+    if (type === "sink") {
+        $.each(vertex.neighboursIn)
+    }
+    
+}
 /************************************ End of Berger and Shor *******************/
 
 //Removes a vertex from the given graph
 function removeVertex(graph,vertex){
-    //added some comments
-    $.each(graph[0], function () {
-        if (this.neighborsOut.length > 0 && this.neighboursIn.length === 0) {
-            sources.push(this);
+    
+    $.each(graph[0], function (index) {
+
+        //Find vertex
+        if (this.label === vertex.label) {
+
+            //Remove edges to node
+            var neighborList = $.merge(this.neighborsOut, this.neighborsIn);
+            removeFromNeighborLists(neighborList, vertex);
+
+            //Remove vertex from graph
+            graph[0].splice(index,1);
         }
     });
 }
@@ -430,6 +477,27 @@ function removeEdge(graph,edge){
 
 }
 
+//Remove vertex from neigborlists
+function removeFromNeighborList(neighborList, vertex) {
+    $.each(neighborList, function () {
+
+        var inList = this.neighborsIn;
+        //Remove vertex in IN edges list on neighbor
+        $.each(inList, function (index) {
+            if(this.label === vertex.label){
+                inList.splice(index, 1);
+            }
+        })
+
+        var outList = this.neighborsOut;
+        //Remove vertex in Out edges list on neighbor
+        $.each(outList, function (index) {
+            if (this.label === vertex.label) {
+                outList.splice(index, 1);
+            }
+        })
+    });
+}
 
 
 //Printing function to see some debug messages
@@ -440,9 +508,9 @@ function prettyDebugPrint(message, G) {
         var i = 0;
         $.each(G[0], function () {
              if(this.neighborsIn !== undefined)
-                 alert('Node ' + i + ' has in neighbors: ' + this.neighborsIn.join() + ' and the total indegree of ' + this.inDegree);
+                 console.log('Node ' + i + ' has in neighbors: ' + this.neighborsIn.join() + ' and the total indegree of ' + this.inDegree);
              if (this.neighborsOut !== undefined)
-                 alert('Node ' + i + ' has out neighbors: ' + this.neighborsOut.join() + ' and the total outdegree of ' + this.outDegree);
+                 console.log('Node ' + i + ' has out neighbors: ' + this.neighborsOut.join() + ' and the total outdegree of ' + this.outDegree);
              i++;
          });
     }
