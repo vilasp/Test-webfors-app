@@ -374,6 +374,7 @@ function bergerAndShor(graph) {
     //create empty sets, s1 = sources append here, s2 sinks prepend here
     var s1 = []
     var s2 = []
+    var notFas = [];
 
     //Main loop : until graph is empty
     while (graph[0].length > 0) {
@@ -387,24 +388,43 @@ function bergerAndShor(graph) {
             var tmpVertex = jQuery.extend(true, {}, sinks[0]);
             sinks.splice(0, 1);
             
+            //add edges to not FAS set
+            $.merge(notFas,addSEdgeToFas(graph,'sink',tmpVertex));
+
             //Remove vertex from graph
             removeVertex(graph, tmpVertex);
 
             $.merge(getPossiblyNewSinks(graph, tmpVertex), sinks);
-
-
-
-
         }
 
         //Loop as long as there as sources in the graph
         while (source.length > 0) {
 
+            //Take first source from list
+            var tmpVertex = jQuery.extend(true, {}, sources[0]);
+            sources.splice(0, 1);
+            
+            //add edges to not FAS set
+            $.merge(notFas,addSEdgeToFas(graph,'source',tmpVertex));
+
+            //Remove vertex from graph
+            removeVertex(graph, tmpVertex);
+
+            $.merge(getPossiblyNewSources(graph, tmpVertex), sources);
+
         }
 
         //Choose a vertex with the largest degree, append to source set s1
+        var largetDegreeVertex = getVerticeWithLargestDegree(graph);
+
+        //add edges to not FAS set
+        $.merge(notFas,addSEdgeToFas(graph,'source',largetDegreeVertex));
+
+        //Remove vertex from graph
+        removeVertex(graph, largetDegreeVertex);
 
     }
+    return notFas;
 
 }
 
@@ -442,19 +462,57 @@ function getSources(graph) {
     return sources;
 };
 
-function getVerticeWithLargestDegree() {
+function getPossiblyNewSinks(graph,vertex) {
+    var possiblyNewSources = [];
 
+    $.each(vertex.neighboursIn, function () {
+        if (this.neighborsOut.length > 0 && this.neighboursIn.length === 0)
+            possiblyNewSources.push(this);
+    });
+}
+
+function getVerticeWithLargestDegree(graph) {
+    var largestIndex;
+    var largestDegree = -100000000;
+    $.each(graph[0],function(index){
+        if((this.outDegree + this.inDegree) > largestDegree)
+            largestIndex = index;
+    });
+
+    return graph[0][index];
 };
 
-function addSEdgeToFas(type,vertex){
-    var edgeList;
-    if (type === 'sink') {
-        edgeList = vertex.neighborsIn;
-    } else {
-        edgeList = vertex.neighborsOut;
-    }
+function addSEdgeToFas(graph,type,vertex){
 
-    $.each
+    var notFas = [];
+    if (type === 'sink') {
+        $.each(vertes.neighborsIn, function () {
+            var neighbor = this;
+            $.each(graph[1], function (index) {
+                if (this.from === neighbor.label && this.to === vertex.label) {
+                    var tmpEdge = jQuery.extend(true, {}, graph[1][index]);
+                    notFas.push(tmpEdge);
+                    graph[0].splice(index, 1);
+                }
+
+            });
+        });
+    }
+    else{
+        $.each(vertes.neighborsOut, function () {
+            var neighbor = this;
+            $.each(graph[1], function (index) {
+                if (this.to === neighbor.label && this.from === vertex.label) {
+                    var tmpEdge = jQuery.extend(true, {}, graph[1][index]);
+                    notFas.push(tmpEdge);
+                    graph[0].splice(index, 1);
+                }
+
+            });
+        });
+    }
+    return notFas;
+    
 }
 /************************************ End of Berger and Shor *******************/
 
