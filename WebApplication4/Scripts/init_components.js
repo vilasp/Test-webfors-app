@@ -228,40 +228,49 @@ function labelEdges(graph) {
     //return graph;
 };
 
+function removeAndStoreSelfLoops(graph) {
+    
+    var selfLoopEdges = [];
+    
+    for (var index = 0; index < init_edges.length; index++) {
+        if (init_edges[index].from === init_edges[index].to) {
+            var deepCopyElement = $.extend(true, [], init_edges[index]);
+            selfLoopEdges.push(deepCopyElement)
+            init_edges.splice(index, 1);
+            index--;
+        }
+    };
+
+    return selfLoopEdges;
+}
 
 //Initialize a graph with edge neighbors and degree count
 function setDegreeCountAndNeighbors(graph) {
 
     var selfLoopEdges = [];
-    var counter,thisTmp;
+    var counter;
 
     $.each(graph[0], function () {
         var currentVertice = this;
-        for (var counter = 0; counter < graph[1].length; counter++) {
-            thisTmp = graph[1][counter];
-            if (thisTmp.from === thisTmp.to) {
-                var deepCopyElement = $.extend(true, [], graph[1][counter]);
-                selfLoopEdges.push(deepCopyElement)
-                graph[1].splice(counter, 1);
-                counter--;
-            }
+        $.each(graph[1], function () {
 
-            if (thisTmp.from === currentVertice.label) {
+            if (this.from === currentVertice.label) {
                 if (!currentVertice.hasOwnProperty('neighborsOut'))
-                    currentVertice['neighborsOut'] = [thisTmp.label];
+                    currentVertice['neighborsOut'] = [this.label];
                 else {
-                    currentVertice['neighborsOut'].push(thisTmp.label);
+                    currentVertice['neighborsOut'].push(this.label);
                 }
             }
 
-            if (thisTmp.to === currentVertice.label) {
+            if (this.to === currentVertice.label) {
                 if (!currentVertice.hasOwnProperty('neighborsIn'))
-                    currentVertice['neighborsIn'] = [thisTmp.label];
+                    currentVertice['neighborsIn'] = [this.label];
                 else {
-                    currentVertice['neighborsIn'].push(thisTmp.label);
+                    currentVertice['neighborsIn'].push(this.label);
                 }
             }
-        }
+
+        });
         if (currentVertice['neighborsIn'] !== undefined ? currentVertice['inDegree'] = currentVertice.neighborsIn.length : 0);
         if (currentVertice['neighborsOut'] !== undefined ? currentVertice['outDegree'] = currentVertice.neighborsOut.length : 0);
     });
