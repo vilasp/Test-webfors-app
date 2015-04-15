@@ -446,11 +446,15 @@ function getVerticeWithLargestDegree() {
 
 };
 
-function addEdgeToFas(type,vertex){
-    if (type === "sink") {
-        $.each(vertex.neighboursIn)
+function addSEdgeToFas(type,vertex){
+    var edgeList;
+    if (type === 'sink') {
+        edgeList = vertex.neighborsIn;
+    } else {
+        edgeList = vertex.neighborsOut;
     }
-    
+
+    $.each
 }
 /************************************ End of Berger and Shor *******************/
 
