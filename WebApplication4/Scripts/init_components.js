@@ -228,15 +228,16 @@ function labelEdges(graph) {
     //return graph;
 };
 
+//Remove self loops from the graph
 function removeAndStoreSelfLoops(graph) {
     
     var selfLoopEdges = [];
     
-    for (var index = 0; index < init_edges.length; index++) {
-        if (init_edges[index].from === init_edges[index].to) {
-            var deepCopyElement = $.extend(true, [], init_edges[index]);
+    for (var index = 0; index < graph[1].length; index++) {
+        if (graph[1][index].from === graph[1][index].to) {
+            var deepCopyElement = $.extend(true, [], graph[1][index]);
             selfLoopEdges.push(deepCopyElement)
-            init_edges.splice(index, 1);
+            graph[1].splice(index, 1);
             index--;
         }
     };
@@ -244,37 +245,99 @@ function removeAndStoreSelfLoops(graph) {
     return selfLoopEdges;
 }
 
-//Initialize a graph with edge neighbors and degree count
+//Remove two-loops from the graph
+function removeAndStoreTwoLoops() {
+
+    var twoLoopEdges = [];
+
+    for (var index = 0; index < graph[1].length; index++) {
+
+        var currentEdge = graph[1][index];
+        var currentEdgeIsPartOfTwoLoop = false;
+        var from, to;
+
+        //Find nodes of current edge
+        $.each(graph[0], function () {
+            if (this.label === currentEdge.from) from = this;
+            if (this.label === currentEdge.to) to = this;
+        });
+
+        //Set edge attribute 
+        currentEdge['reversed'] = false;
+
+        //Check if From vertex is part of a two loop
+        if (from.neighborsIn !== undefined) {
+            for (var index1 = 0; index1 < from.neighborsIn.length; index1++) {
+                if (from.neighborsIn[index1].label === to.label && !checkIfTwoLoopAlreadyExist(currentEdge, twoLoopEdges)) {
+                    currentEdgeIsPartOfTwoLoop = true;
+                    from.neighborsIn.splice(index1, 1);
+                    var tmpDegree = from.inDegree;
+                    from.inDegree = tmpDegree - 1;
+                    break;
+                }
+            }
+        }
+
+        //If From was part of two loop so is To
+        if (currentEdgeIsPartOfTwoLoop) {
+            for (var index2 = 0; index2 < to.neighborsOut.length; index2++) {
+                if (to.neighborsOut[index2].label === from.label) {
+                    to.neighborsOut.splice(index2, 1);
+                    var tmpDegree = to.outDegree;
+                    to.outDegree = tmpDegree - 1;
+
+                    var tmpEdge = jQuery.extend(true, {}, graph[1][index]);
+                    tmpEdge.reversed = true;
+                    twoLoopEdges.push(tmpEdge);
+                    graph[1].splice(index, 1);
+                    index--;
+                    break;
+                }
+
+            }
+        }
+    };
+}
+
+//Check if a edge already had a reversed brother
+function checkIfTwoLoopAlreadyExist(edge, existingTwoLoopEdges) {
+    var findReverse = false;
+    $.each(existingTwoLoopEdges, function () {
+        if (this.to === edge.from && this.from === edge.to) {
+            findReverse = true;
+        }
+    });
+    return findReverse;
+};
+
+//Initialize a graph with neighbor list and degree count
 function setDegreeCountAndNeighbors(graph) {
 
-    var selfLoopEdges = [];
-    var counter;
+    $.each(graph[1], function () {
+        var currentEdge = this;
+        var from, to;
 
-    $.each(graph[0], function () {
-        var currentVertice = this;
-        $.each(graph[1], function () {
+        $.each(graph[0], function () {
 
-            if (this.from === currentVertice.label) {
-                if (!currentVertice.hasOwnProperty('neighborsOut'))
-                    currentVertice['neighborsOut'] = [this.label];
-                else {
-                    currentVertice['neighborsOut'].push(this.label);
-                }
-            }
-
-            if (this.to === currentVertice.label) {
-                if (!currentVertice.hasOwnProperty('neighborsIn'))
-                    currentVertice['neighborsIn'] = [this.label];
-                else {
-                    currentVertice['neighborsIn'].push(this.label);
-                }
-            }
-
+            if (this.label === currentEdge.from) from = this;
+            if (this.label === currentEdge.to) to = this;
         });
-        if (currentVertice['neighborsIn'] !== undefined ? currentVertice['inDegree'] = currentVertice.neighborsIn.length : 0);
-        if (currentVertice['neighborsOut'] !== undefined ? currentVertice['outDegree'] = currentVertice.neighborsOut.length : 0);
+
+        //Edge from vertex
+        if (!from.hasOwnProperty('neighborsOut')) from['neighborsOut'] = [to];
+        else {
+            from['neighborsOut'].push(to);
+        }
+
+        //Edge into vertex
+        if (!to.hasOwnProperty('neighborsIn')) to['neighborsIn'] = [from];
+        else {
+            to['neighborsIn'].push(from);
+        }
+
+        to['inDegree'] = to.neighborsIn.length;
+        from['outDegree'] = from.neighborsOut.length;
     });
-    return selfLoopEdges;
 }
 
 //Initialize the cycle removal step
