@@ -59,7 +59,10 @@ var selfLoopEdges = removeAndStoreSelfLoops(graph);
 setNeighbors(graph);
 
 //Remove two loops and storelilife them separately 
-var twoLoopEdges = removeAndStoreTwoLoops(G);
+var twoLoopEdges = removeAndStoreTwoLoops(graph);
+
+//Step 1 - Contruct a FAS-set, returns a new graph GFas
+var GFas = cycleRemoval(graph);
 
 /************************ Graph construction end **************************************/
 
@@ -141,41 +144,163 @@ function removeAndStoreTwoLoops(graph) {
         //Set edge attribute 
         currentEdge['reversed'] = false;
 
+        //Remove edge from neighbor
         if (graph.adjacencyList[from.number].neighborsIn.length > 0) {
-            f
-        }
-
-        //Check if From vertex is part of a two loop
-        if (from.neighborsIn !== undefined) {
-            for (var index1 = 0; index1 < from.neighborsIn.length; index1++) {
-                if (from.neighborsIn[index1].label === to.label && !checkIfTwoLoopAlreadyExist(currentEdge, twoLoopEdges)) {
+            for (var index1 = 0; index1 < graph.adjacencyList[from.number].neighborsIn.length; index1++) {
+                if (graph.adjacencyList[from.number].neighborsIn[index1] === to.label && !checkIfTwoLoopAlreadyExist(currentEdge, twoLoopEdges)) {
                     currentEdgeIsPartOfTwoLoop = true;
-                    from.neighborsIn.splice(index1, 1);
-                    var tmpDegree = from.inDegree;
-                    from.inDegree = tmpDegree - 1;
-                    break;
+                    graph.adjacencyList[from.number].neighborsIn.splice(index1, 1);
                 }
             }
         }
 
-        //If From was part of two loop so is To
+        //If From was part of two loop then so is To
         if (currentEdgeIsPartOfTwoLoop) {
-            for (var index2 = 0; index2 < to.neighborsOut.length; index2++) {
-                if (to.neighborsOut[index2].label === from.label) {
-                    to.neighborsOut.splice(index2, 1);
-                    var tmpDegree = to.outDegree;
-                    to.outDegree = tmpDegree - 1;
+            for (var index2 = 0; index2 < graph.adjacencyList[to.number].neighborsOut.length; index2++) {
+                if (graph.adjacencyList[to.number].neighborsOut[index2] === from.label) {
+                    graph.adjacencyList[to.number].neighborsOut.splice(index2, 1);
 
-                    //Remove the reversed edge form the graph
-                    var tmpEdge = jQuery.extend(true, {}, graph[1][index]);
-                    tmpEdge.reversed = true;
+                    //Remove the reversed edge form the graph only if 
+                    var tmpEdge = jQuery.extend(true, {}, graph.edges[index]);
                     twoLoopEdges.push(tmpEdge);
-                    graph[1].splice(index, 1);
+                    graph.edges.splice(index, 1);
                     index--;
-                    break;
                 }
             }
         }
     };
+
     return twoLoopEdges;
 }
+
+//Check if a edge already had a reversed brother
+function checkIfTwoLoopAlreadyExist(edge, existingTwoLoopEdges) {
+    var findReverse = false;
+    $.each(existingTwoLoopEdges, function () {
+        if (this.to === edge.from && this.from === edge.to) {
+            findReverse = true;
+        }
+    });
+    return findReverse;
+};
+
+//Initialize the cycle removal step
+function cycleRemoval(graph) {
+
+    //Do a deep copy of the graph to work with
+    var GCycleRemoval = jQuery.extend(true, {}, graph);
+
+    //start the Berger and Shor algorithm
+    var topologicalOrdering = bergerAndShor(GCycleRemoval);
+};
+
+/*********************** Berger and Shor ***********************
+Works by successively removing sources and sinks from the graph and placing
+them in separate sets. When no more sinks/ sources can be removed a vertex
+with largest degree is chosen. When no more vertices exist in the graph 
+the algorithm returns with a toplogical ordering of vertices.
+***************************************************************/
+function bergerAndShor(graph) {
+
+    //create empty sets, s1 = sources append here, s2 sinks prepend here
+    var s1 = []
+    var s2 = []
+    var notFas = [];
+
+    //Main loop : until graph is empty
+    while (graph.vertices.length > 0) {
+        var sources = getSources(graph);
+        var sinks = getSinks(graph);
+
+        //Loop as long as there are sinks in the graph
+        while (sinks.length > 0) {
+
+            //Take first sink from list
+            var tmpVertex = jQuery.extend(true, {}, sinks[0]);
+            sinks.splice(0, 1);
+
+            //add edges to not FAS set
+            $.merge(notFas, addEdgeToFas(graph, 'sink', tmpVertex));
+
+            //Remove vertex from graph
+            removeVertex(graph, tmpVertex);
+
+            $.merge(getPossiblyNewSinks(graph, tmpVertex), sinks);
+        }
+
+        //Loop as long as there as sources in the graph
+        while (source.length > 0) {
+
+            //Take first source from list
+            var tmpVertex = jQuery.extend(true, {}, sources[0]);
+            sources.splice(0, 1);
+
+            //add edges to not FAS set
+            $.merge(notFas, addSEdgeToFas(graph, 'source', tmpVertex));
+
+            //Remove vertex from graph
+            removeVertex(graph, tmpVertex);
+
+            $.merge(getPossiblyNewSources(graph, tmpVertex), sources);
+
+        }
+
+        //Choose a vertex with the largest degree, append to source set s1
+        var largetDegreeVertex = getVerticeWithLargestDegree(graph);
+
+        //add edges to not FAS set
+        $.merge(notFas, addSEdgeToFas(graph, 'source', largetDegreeVertex));
+
+        //Remove vertex from graph
+        removeVertex(graph, largetDegreeVertex);
+
+    }
+    return notFas;
+
+}
+
+//Loops through the set of vertices and checks if they only have out neighbors
+function getSinks(graph) {
+    var sinks = [];
+
+    $.each(graph.vertices, function () {
+        if (graph.adjacencyList[this.number].neighborsIn > 0 && this.neighboursOut.length === 0) {
+            sinks.push(this);
+        }
+    });
+
+    return sinks;
+}
+
+//Adds edges to the notFas set
+function addEdgeToFas(graph, type, vertex) {
+
+    var notFas = [];
+    if (type === 'sink') {
+        $.each(graph.adjacencyList[vertex.number].neighborsIn, function () {
+            var neighbor = this;
+            $.each(graph.edges, function (index) {
+                if (this.from === neighbor.label && this.to === vertex.label) {
+                    var tmpEdge = jQuery.extend(true, {}, graph.edges[index]);
+                    notFas.push(tmpEdge);
+                    graph.edges.splice(index, 1);
+                }
+            });
+        });
+    }
+    else {
+        $.each(graph.adjacencyList[vertex.number].neighborsOut, function () {
+            var neighbor = this;
+            $.each(graph.edges, function (index) {
+                if (this.to === neighbor.label && this.from === vertex.label) {
+                    var tmpEdge = jQuery.extend(true, {}, graph.edges[index]);
+                    notFas.push(tmpEdge);
+                    graph.edges.splice(index, 1);
+                }
+            });
+        });
+    }
+    return notFas;
+
+}
+/************************************ End of Berger and Shor *******************/
