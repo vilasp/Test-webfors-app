@@ -203,7 +203,7 @@ Output:
 
 **/
 function constructGraph(vertices, edges) {
-
+    
     var G = [vertices, edges];
 
     //Label edges
@@ -227,6 +227,29 @@ function constructGraph(vertices, edges) {
 
 };
 
+
+var graph = { vertices: [], edges: [] };
+
+graph.edges = getTestEdges();
+graph.vertices = getTestVertices();
+
+var adjecencyMatrix = [{ neighborsIn: [] }, { neighborsOut: [] }];
+
+function assignVertexNumber(graph) {
+    var number = 0;
+    $.each(graph.vertices, function () {
+        this['number'] = number;
+        number++;
+    });
+};
+
+
+
+
+
+
+
+
 //Label each edge 
 function labelEdges(graph) {
     var i = 0;
@@ -240,9 +263,9 @@ function labelEdges(graph) {
 
 //Remove self loops from the graph
 function removeAndStoreSelfLoops(graph) {
-    
+
     var selfLoopEdges = [];
-    
+
     for (var index = 0; index < graph[1].length; index++) {
         if (graph[1][index].from === graph[1][index].to) {
             var deepCopyElement = $.extend(true, [], graph[1][index]);
@@ -253,7 +276,7 @@ function removeAndStoreSelfLoops(graph) {
     };
 
     return selfLoopEdges;
-}
+};
 
 //Remove two-loops from the graph
 function removeAndStoreTwoLoops(graph) {
@@ -356,8 +379,8 @@ function cycleRemoval(graph) {
 
     //Do a deep copy of the graph to work with
     var newEdges = jQuery.extend(true, {}, graph[1]);
-    var newVertices = jQuery.extend(true, {}, graph[0]);
-    var GCycleRemoval = [newVertices, newEdges];
+    //var newVertices = jQuery.extend(true, {}, graph[0]);
+    var GCycleRemoval = [graph[0], newEdges];
 
     //start the Berger and Shor algorithm
     var topologicalOrdering = bergerAndShor(GCycleRemoval);
@@ -486,26 +509,26 @@ function addSEdgeToFas(graph,type,vertex){
 
     var notFas = [];
     if (type === 'sink') {
-        $.each(vertes.neighborsIn, function () {
+        $.each(vertex.neighborsIn, function () {
             var neighbor = this;
             $.each(graph[1], function (index) {
                 if (this.from === neighbor.label && this.to === vertex.label) {
                     var tmpEdge = jQuery.extend(true, {}, graph[1][index]);
                     notFas.push(tmpEdge);
-                    graph[0].splice(index, 1);
+                    graph[1].splice(index, 1);
                 }
 
             });
         });
     }
     else{
-        $.each(vertes.neighborsOut, function () {
+        $.each(vertex.neighborsOut, function () {
             var neighbor = this;
             $.each(graph[1], function (index) {
                 if (this.to === neighbor.label && this.from === vertex.label) {
                     var tmpEdge = jQuery.extend(true, {}, graph[1][index]);
                     notFas.push(tmpEdge);
-                    graph[0].splice(index, 1);
+                    graph[1].splice(index, 1);
                 }
 
             });
