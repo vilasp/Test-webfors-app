@@ -64,6 +64,8 @@ var twoLoopEdges = removeAndStoreTwoLoops(graph);
 //Step 1 - Contruct a FAS-set, returns a new graph GFas
 var GFas = cycleRemoval(graph);
 
+//Step 1.1 - Reverse edges left in FAS
+var a = 5;
 /************************ Graph construction end **************************************/
 
 
@@ -112,15 +114,20 @@ function setNeighbors(graph) {
     //For every edge in the graph
     $.each(graph.edges, function () {
         var currentEdge = this;
+        var to, from
 
         //Add to corresponding neighbor set
         $.each(graph.vertices, function () {
-
             if (this.label === currentEdge.from)
-                graph.adjacencyList[this.number].neighborsOut.push(currentEdge.to);
+                from = this;
             else if (this.label === currentEdge.to)
-                graph.adjacencyList[this.number].neighborsIn.push(currentEdge.from);
+                to = this;
+            
         });
+
+        graph.adjacencyList[from.number].neighborsOut.push([currentEdge.to, to.number]);
+        graph.adjacencyList[to.number].neighborsIn.push([currentEdge.from, from.number]);
+
     });
 };
 
@@ -147,7 +154,7 @@ function removeAndStoreTwoLoops(graph) {
         //Remove edge from neighbor
         if (graph.adjacencyList[from.number].neighborsIn.length > 0) {
             for (var index1 = 0; index1 < graph.adjacencyList[from.number].neighborsIn.length; index1++) {
-                if (graph.adjacencyList[from.number].neighborsIn[index1] === to.label && !checkIfTwoLoopAlreadyExist(currentEdge, twoLoopEdges)) {
+                if (graph.adjacencyList[from.number].neighborsIn[index1][0] === to.label && !checkIfTwoLoopAlreadyExist(currentEdge, twoLoopEdges)) {
                     currentEdgeIsPartOfTwoLoop = true;
                     graph.adjacencyList[from.number].neighborsIn.splice(index1, 1);
                 }
@@ -157,7 +164,7 @@ function removeAndStoreTwoLoops(graph) {
         //If From was part of two loop then so is To
         if (currentEdgeIsPartOfTwoLoop) {
             for (var index2 = 0; index2 < graph.adjacencyList[to.number].neighborsOut.length; index2++) {
-                if (graph.adjacencyList[to.number].neighborsOut[index2] === from.label) {
+                if (graph.adjacencyList[to.number].neighborsOut[index2][0] === from.label) {
                     graph.adjacencyList[to.number].neighborsOut.splice(index2, 1);
 
                     //Remove the reversed edge form the graph only if 
@@ -171,7 +178,7 @@ function removeAndStoreTwoLoops(graph) {
     };
 
     return twoLoopEdges;
-}
+};
 
 //Check if a edge already had a reversed brother
 function checkIfTwoLoopAlreadyExist(edge, existingTwoLoopEdges) {
@@ -223,54 +230,84 @@ function bergerAndShor(graph) {
             $.merge(notFas, addEdgeToFas(graph, 'sink', tmpVertex));
 
             //Remove vertex from graph
-            removeVertex(graph, tmpVertex);
+            removeVertex('sink', graph, tmpVertex);
 
-            $.merge(getPossiblyNewSinks(graph, tmpVertex), sinks);
+            $.merge(getSinks(graph), sinks);
         }
 
         //Loop as long as there as sources in the graph
-        while (source.length > 0) {
+        while (sources.length > 0) {
 
             //Take first source from list
             var tmpVertex = jQuery.extend(true, {}, sources[0]);
             sources.splice(0, 1);
 
             //add edges to not FAS set
-            $.merge(notFas, addSEdgeToFas(graph, 'source', tmpVertex));
+            $.merge(notFas, addEdgeToFas(graph, 'source', tmpVertex));
 
             //Remove vertex from graph
-            removeVertex(graph, tmpVertex);
+            removeVertex('source', graph, tmpVertex);
 
-            $.merge(getPossiblyNewSources(graph, tmpVertex), sources);
+            $.merge(getSources(graph), sources);
 
         }
 
         //Choose a vertex with the largest degree, append to source set s1
-        var largetDegreeVertex = getVerticeWithLargestDegree(graph);
+        var largestDegreeVertex = getVertexWithLargestDegree(graph);
 
         //add edges to not FAS set
-        $.merge(notFas, addSEdgeToFas(graph, 'source', largetDegreeVertex));
+        $.merge(notFas, addEdgeToFas(graph, 'source', largestDegreeVertex));
 
         //Remove vertex from graph
-        removeVertex(graph, largetDegreeVertex);
+        removeVertex('largestDegree', graph, largestDegreeVertex);
 
     }
     return notFas;
 
-}
+};
 
-//Loops through the set of vertices and checks if they only have out neighbors
+//Loops through the set of vertices and checks if they only have in neighbors
 function getSinks(graph) {
     var sinks = [];
 
     $.each(graph.vertices, function () {
-        if (graph.adjacencyList[this.number].neighborsIn > 0 && this.neighboursOut.length === 0) {
+        if (graph.adjacencyList[this.number].neighborsIn.length > 0 && graph.adjacencyList[this.number].neighborsOut.length === 0) {
             sinks.push(this);
         }
     });
 
     return sinks;
-}
+};
+
+//Loops through the set of vertices and checks if they only have out neighbors
+function getSources(graph) {
+    var sources = [];
+
+    $.each(graph.vertices, function () {
+        if (graph.adjacencyList[this.number].neighborsOut.length > 0 && graph.adjacencyList[this.number].neighborsIn.length === 0) {
+            sources.push(this);
+        }
+    });
+
+    return sources;
+};
+
+//Returns vertex with largest degree
+function getVertexWithLargestDegree(graph) {
+    var largestIndex;
+    var largestDegree = -100000000;
+    $.each(graph.vertices, function (index) {
+
+        var currDegree = graph.adjacencyList[this.number].neighborsOut.length + graph.adjacencyList[this.number].neighborsIn.length;
+
+        if (currDegree > largestDegree) {
+            largestIndex = index;
+            largestDegree = currDegree;
+        }
+    });
+
+    return graph.vertices[largestIndex];
+};
 
 //Adds edges to the notFas set
 function addEdgeToFas(graph, type, vertex) {
@@ -278,9 +315,9 @@ function addEdgeToFas(graph, type, vertex) {
     var notFas = [];
     if (type === 'sink') {
         $.each(graph.adjacencyList[vertex.number].neighborsIn, function () {
-            var neighbor = this;
+            var neighbor = this[0];
             $.each(graph.edges, function (index) {
-                if (this.from === neighbor.label && this.to === vertex.label) {
+                if (this.from === neighbor && this.to === vertex.label) {
                     var tmpEdge = jQuery.extend(true, {}, graph.edges[index]);
                     notFas.push(tmpEdge);
                     graph.edges.splice(index, 1);
@@ -290,17 +327,66 @@ function addEdgeToFas(graph, type, vertex) {
     }
     else {
         $.each(graph.adjacencyList[vertex.number].neighborsOut, function () {
-            var neighbor = this;
-            $.each(graph.edges, function (index) {
-                if (this.to === neighbor.label && this.from === vertex.label) {
-                    var tmpEdge = jQuery.extend(true, {}, graph.edges[index]);
+            var neighbor = this[0];
+            $.each(graph.edges, function (index1) {
+                if (this.to === neighbor && this.from === vertex.label) {
+                    var tmpEdge = jQuery.extend(true, {}, graph.edges[index1]);
                     notFas.push(tmpEdge);
-                    graph.edges.splice(index, 1);
+                    graph.edges.splice(index1, 1);
                 }
             });
         });
     }
     return notFas;
 
-}
+};
 /************************************ End of Berger and Shor *******************/
+
+//Removes a vertex from the given graph
+function removeVertex(type, graph, vertex) {
+
+    $.each(graph.vertices, function (index) {
+
+        //Find vertex
+        if (this.label === vertex.label) {
+
+            //Remove vertex from neighbor lists
+            if (type === 'sink') {
+                removeFromNeighborLists(type, graph.adjacencyList[this.number].neighborsIn, vertex);
+            } else if (type === 'source') {
+                removeFromNeighborLists(type, graph.adjacencyList[this.number].neighborsOut, vertex);
+            } else {
+                removeFromNeighborLists(type, graph.adjacencyList[this.number].neighborsIn, vertex);
+                removeFromNeighborLists(type, graph.adjacencyList[this.number].neighborsOut, vertex);
+            }
+
+            //Remove vertex from graph, empty its neighbors lists
+            graph.vertices.splice(index, 1);
+            graph.adjacencyList[this.number].neighborsIn = [];
+            graph.adjacencyList[this.number].neighborsOut = [];
+        }
+    });
+};
+
+//Remove vertex from neigborlists
+function removeFromNeighborLists(type, neighborList, vertex) {
+
+    $.each(neighborList, function () {
+
+        var currentVertice = this;
+        if (type === 'sink' || type === 'largestDegree') {
+            $.each(graph.adjacencyList[currentVertice[1]].neighborsOut, function (index) {
+                if (this[0] === vertex.label) {
+                    graph.adjacencyList[currentVertice[1]].neighborsOut.splice(index, 1);
+                }
+            });
+        } else if (type === 'source' || type === 'largestDegree') {
+            $.each(graph.adjacencyList[currentVertice[1]].neighborsIn, function (index) {
+                if (this[0] === vertex.label) {
+                    graph.adjacencyList[currentVertice[1]].neighborsIn.splice(index, 1);
+                }
+            });
+        }
+    });
+
+};
