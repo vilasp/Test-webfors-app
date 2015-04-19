@@ -578,3 +578,57 @@ function reverseEdgesInFas(fas) {
         this.revered = true;
     });
 }
+
+/****************************** Longest-path algrithm ************************************************/
+function longestPath(graph) {
+    var alreadyPicked = [], layering = [];
+    var currentLayer = 1;
+    var previousLayer = getSinks([],graph);
+    layering.push(previousLayer);
+
+    while (graph.vertices > 0) {
+        var currentMaxVertex = checkMostEdgesInPreviousLayer(graph, previousLayer);
+        if (currentMaxVertex !== undefined) {
+            currentMaxVertex['layer'] = currentLayer;
+            alreadyPicked.push(currentMaxVertex);
+            removeVertex("source",graph,currentMaxVertex);
+        }
+        if (currentMaxVertex === undefined) {
+            currentLayer++;
+            var tmpPrevious = $.merge(previousLayer,alreadyPicked);
+        }
+    };
+
+
+     
+   
+}
+
+function checkMostEdgesInPreviousLayer(graph,previousLayer) {
+    var maxVertex = undefined;
+    var max = 0;
+
+    for (var index = 0; index < graph.vertices.length; index++) {
+
+        //Select vertex with most outgoing edges in the previous layer
+        var currentVertex = graph.vertices[index];
+        var currentVertexOutgoingEdges = graph.adjacencyList[currentVertex.number].neighborsOut;
+        var currentMaxCount = 0;
+        $.each(currentVertexOutgoingEdges, function () {
+            tmpVertex = this;
+            $.each(previousLayer, function () {
+                if (this.label === tmpVertex[0]) {
+                    currentMaxCount++;
+                }
+            });
+        });
+        if (currentMaxCount > max) {
+            max = currentMaxCount;
+            maxVertex = currentVertex;
+        }
+            
+    }
+}
+
+
+/****************************** End of longest path   ************************************************/
