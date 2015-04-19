@@ -156,11 +156,11 @@ function getTestEdges() {
     var edge16 = { "to": "node11", "from": "node10" };
     var edge17 = { "to": "node11", "from": "node11" };
     var edge18 = { "to": "node10", "from": "node10" };
-    var edge19 = { "to": "node1", "from": "node5" };
-    var edge20 = { "to": "node2", "from": "node10" };
-    var edge21 = { "to": "node4", "from": "node8" };
-
-    return [edge0, edge1, edge2, edge3, edge20, edge21, edge4, edge5, edge6, edge7, edge8, edge9, edge19, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
+    //var edge19 = { "to": "node1", "from": "node5" };
+    //var edge20 = { "to": "node2", "from": "node10" };
+    //var edge21 = { "to": "node4", "from": "node8" };
+    return [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
+    //return [edge0, edge1, edge2, edge3, edge20, edge21, edge4, edge5, edge6, edge7, edge8, edge9, edge19, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];//
 };
 
 function getTestVertices() {
@@ -212,6 +212,10 @@ function constructGraph() {
     graph.adjacencyList = [];
     assigningVertexAndLabelNumber(graph);
     setNeighbors(graph);
+
+    //Step 2 - Assign vertices to layers
+    var layeredVertices = longestPath(graph);
+    var tmp = 4;
 };
 /************************ Graph construction end **************************************/
 
@@ -575,18 +579,24 @@ function reverseEdgesInFas(fas) {
         this.from = to;
 
         //Update reverse attribute so we can keep track of reversed edges
-        this.revered = true;
+        this.reversed = true;
     });
 }
 
 /****************************** Longest-path algrithm ************************************************/
 function longestPath(graph) {
-    var alreadyPicked = [], layering = [];
+    var alreadyPicked = [];
     var currentLayer = 1;
-    var previousLayer = getSinks([],graph);
-    layering.push(previousLayer);
+    var previousLayer = getSinks([], graph);
 
-    while (graph.vertices > 0) {
+    //Add sink vertices to the first layer
+    $.each(previousLayer, function () {
+        this['layer'] = 0;
+        alreadyPicked.push(this);
+        removeVertex("source", graph, this);
+    });
+
+    while (graph.vertices.length > 0) {
         var currentMaxVertex = checkMostEdgesInPreviousLayer(graph, previousLayer);
         if (currentMaxVertex !== undefined) {
             currentMaxVertex['layer'] = currentLayer;
@@ -600,7 +610,7 @@ function longestPath(graph) {
     };
 
 
-     
+    return alreadyPicked;
    
 }
 
@@ -628,6 +638,7 @@ function checkMostEdgesInPreviousLayer(graph,previousLayer) {
         }
             
     }
+    return maxVertex;
 }
 
 
