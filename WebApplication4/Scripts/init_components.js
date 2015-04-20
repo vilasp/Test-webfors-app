@@ -596,6 +596,14 @@ function reverseEdgesInFas(fas) {
     });
 }
 
+function getHighestVerticeNumber(graph){
+    return graph.vertices[graph.verties.length - 1].number;
+};
+
+function getHighestEdgeLabel(graph) {
+    return undefined
+};
+
 /****************************** Longest-path algrithm ************************************************/
 function longestPath(graph) {
     var alreadyPicked = [],layering = [],currentLayerVertices = [];
@@ -674,29 +682,62 @@ function checkMostEdgesInPreviousLayer(graph,previousLayer) {
 /****************************** Proper layering *****************************************************/
 function makeProperLayering(graph) {
     var dummyVertices = [], dummyEdges = [];
-    $.each(graph.edges, function () {
+    for (var index = 0; index < graph.edges.length;index++){
         var to, from;
-        var currentEdge = this;
+        var currentEdge = graph.edges[index];
+        var tmpDummies = [], tmpEdges = [];
         //Get layer for both edges
         $.each(graph.vertices, function () {
             if (currentEdge.from === this.label) from = this;
             else if (currentEdge.to === this.label) to = this;
         });
 
-        var differenceInLayers = Math.abs(from.layer - to.layer);
-        if (differenceInLayers > 1) {
-            for(var index = 0; index < differenceInLayers; index++){
-                
-            }
+        var span = Math.abs(from.layer - to.layer);
+        if (span > 1) {
+            for (var index1 = 0; index1 < span - 1; index1++) {
+                var dummyVertex = createDummyVertex(graph, from);
+                tmpDummies.push(dummyVertex);
+            };
+            for (var index2 = 0; index2 < span; index2) {
+                if (index2 === 0) {
+                    var tmpEdge = createDummyEdge(from, dummyVertex[index2], true);
+                    updateAdjacenecyList(tmpEdge,from,dummyVertex[index2]);
+                }
+
+                else if (index2 < span - 1) {
+                    var tmpEdge = createDummyEdge(dummyVertex[index2 - 1], dummyVertex[index2], true);
+                    updateAdjacenecyList(tmpEdge,dummyVertex[index2-1], dummyVertex[index2]);
+                }
+
+                else {
+                    var tmpEdge = createDummyEdge(dummyVertex[index2], to, true);
+                    updateAdjacenecyList(tmpEdge,dummyVertex[index2],to);
+                }
+            };
         }
-    });
+    };
 };
 
-function createDummyVertex() {
+function createDummyVertex(graph,fromParent) {
+    var newDummyVertex = {};
+    newDummyVertex['label'] = 'node' + getHighestVerticeNumber(graph);
+    newDummyVertex['number'] = getHighestVerticeNumber(graph);
+    newDummyVertex['layer'] = fromParent.layer;
+    newDummyVertex['dummy'] = true;
+    graph.vertices.push(newDummyVertex);
+    graph.adjacencyList.push({neighborIn : [], neighborOut : []});
+    return newDummyVertex;
+};
 
-}
+function createDummyEdge(to,from) {
+    var newDummyEdge = {};
+    newDummyEdge['to'] = to;
+    newDummyEdge['from'] = from;
+    newDummyEdge['dummy'] = true;
+    return newDummyEdge;
 
-function createDummyEdge() {
+};
 
-}
+function updateAdjacencyList(){
+};
 /****************************** End of proper layering **********************************************/
