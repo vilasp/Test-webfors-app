@@ -661,11 +661,9 @@ function checkMostEdgesInPreviousLayer(graph,previousLayer) {
                 }
             });
         });
-        if (currentMaxCount > max) {
-            max = currentMaxCount;
+
+        if (currentMaxCount === currentVertexOutgoingEdges.length)
             maxVertex = currentVertex;
-        }
-            
     }
     return maxVertex;
 }
