@@ -156,11 +156,11 @@ function getTestEdges() {
     var edge16 = { "to": "node11", "from": "node10" };
     var edge17 = { "to": "node11", "from": "node11" };
     var edge18 = { "to": "node10", "from": "node10" };
-    //var edge19 = { "to": "node1", "from": "node5" };
-    //var edge20 = { "to": "node2", "from": "node10" };
-    //var edge21 = { "to": "node4", "from": "node8" };
-    return [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
-    //return [edge0, edge1, edge2, edge3, edge20, edge21, edge4, edge5, edge6, edge7, edge8, edge9, edge19, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];//
+    var edge19 = { "to": "node1", "from": "node5" };
+    var edge20 = { "to": "node2", "from": "node10" };
+    var edge21 = { "to": "node4", "from": "node8" };
+    //return [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
+    return [edge0, edge1, edge2, edge3, edge20, edge21, edge4, edge5, edge6, edge7, edge8, edge9, edge19, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];//
 };
 
 function getTestVertices() {
@@ -212,12 +212,15 @@ function constructGraph() {
     graph.adjacencyList = [];
     assigningVertexAndLabelNumber(graph);
     setNeighbors(graph);
-
+ 
     //Step 2 - Assign vertices to layers
     var layeredVertices = longestPath(graph);
     graph.vertices = layeredVertices[0];
     graph['layering'] = layeredVertices[1];
-    var tmp = 4;
+
+    //Step 2.1 - Make proper layering
+    var dummyVerticesAndEdges = makeProperLayering(graph);
+    var tmp = 0;
 };
 /************************ Graph construction end **************************************/
 
@@ -597,7 +600,7 @@ function reverseEdgesInFas(fas) {
 }
 
 function getHighestVerticeNumber(graph){
-    return graph.vertices[graph.verties.length - 1].number;
+    return graph.vertices.length;
 };
 
 function getHighestEdgeLabel(graph) {
@@ -686,7 +689,8 @@ function makeProperLayering(graph) {
         var to, from;
         var currentEdge = graph.edges[index];
         var tmpDummies = [], tmpEdges = [];
-        //Get layer for both edges
+
+        //Get vertices in edge
         $.each(graph.vertices, function () {
             if (currentEdge.from === this.label) from = this;
             else if (currentEdge.to === this.label) to = this;
@@ -695,49 +699,64 @@ function makeProperLayering(graph) {
         var span = Math.abs(from.layer - to.layer);
         if (span > 1) {
             for (var index1 = 0; index1 < span - 1; index1++) {
-                var dummyVertex = createDummyVertex(graph, from);
-                tmpDummies.push(dummyVertex);
+                if(index1 === 0)
+                    tmpDummies.push(createDummyVertex(graph, from));
+                else
+                    tmpDummies.push(createDummyVertex(graph, tmpDummies[index1-1]));
             };
-            for (var index2 = 0; index2 < span; index2) {
+            for (var index2 = 0; index2 < span; index2++) {
+                var tmpEdge;
                 if (index2 === 0) {
-                    var tmpEdge = createDummyEdge(from, dummyVertex[index2], true);
-                    updateAdjacenecyList(tmpEdge,from,dummyVertex[index2]);
+                    tmpEdge = createDummyEdge(from, tmpDummies[index2], true);
+                    updateAdjacencyList(graph, from, tmpDummies[index2]);
                 }
 
                 else if (index2 < span - 1) {
-                    var tmpEdge = createDummyEdge(dummyVertex[index2 - 1], dummyVertex[index2], true);
-                    updateAdjacenecyList(tmpEdge,dummyVertex[index2-1], dummyVertex[index2]);
+                    tmpEdge = createDummyEdge(tmpDummies[index2 - 1], tmpDummies[index2], true);
+                    updateAdjacencyList(graph, tmpDummies[index2 - 1], tmpDummies[index2]);
                 }
 
                 else {
-                    var tmpEdge = createDummyEdge(dummyVertex[index2], to, true);
-                    updateAdjacenecyList(tmpEdge,dummyVertex[index2],to);
+                    tmpEdge = createDummyEdge(tmpDummies[index2-1], to, true);
+                    updateAdjacencyList(graph, tmpDummies[index2-1], to);
                 }
+                dummyEdges.push(tmpEdge);
             };
+
+            graph.edges.splice(index, 1);
+            index--;
+
+            dummyVertices.push(tmpDummies);
         }
     };
+    return [dummyVertices, dummyEdges];
 };
 
 function createDummyVertex(graph,fromParent) {
     var newDummyVertex = {};
     newDummyVertex['label'] = 'node' + getHighestVerticeNumber(graph);
     newDummyVertex['number'] = getHighestVerticeNumber(graph);
-    newDummyVertex['layer'] = fromParent.layer;
+    newDummyVertex['layer'] = fromParent.layer - 1;
     newDummyVertex['dummy'] = true;
     graph.vertices.push(newDummyVertex);
-    graph.adjacencyList.push({neighborIn : [], neighborOut : []});
+    graph.adjacencyList.push({neighborsIn : [], neighborsOut : []});
     return newDummyVertex;
 };
 
-function createDummyEdge(to,from) {
+function createDummyEdge(from,to) {
     var newDummyEdge = {};
-    newDummyEdge['to'] = to;
-    newDummyEdge['from'] = from;
+    newDummyEdge['to'] = to.label;
+    newDummyEdge['from'] = from.label;
     newDummyEdge['dummy'] = true;
     return newDummyEdge;
 
 };
 
-function updateAdjacencyList(){
+function updateAdjacencyList(graph, from, to) {
+    //set the edge in from vertex
+    graph.adjacencyList[from.number].neighborsOut.push([to.label, to.number]);
+
+    //set the edge in In veretx
+    graph.adjacencyList[to.number].neighborsIn.push([from.label,from.number])
 };
 /****************************** End of proper layering **********************************************/
