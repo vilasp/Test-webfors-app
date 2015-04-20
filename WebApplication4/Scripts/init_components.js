@@ -319,7 +319,18 @@ function removeAndStoreTwoLoops(graph) {
 
         //If From was part of two loop then so is To
         if (currentEdgeIsPartOfTwoLoop) {
-            for (var index2 = 0; index2 < graph.adjacencyList[to.number].neighborsOut.length; index2++) {
+            for (var index2 = 0; index2 < graph.adjacencyList[to.number].neighborsIn.length;index2++){
+                if (graph.adjacencyList[to.number].neighborsIn[index2][0] === from.label) {
+                    graph.adjacencyList[to.number].neighborsIn.splice(index2, 1);
+
+                    //Remove the reversed edge form the graph only if 
+                    var tmpEdge = jQuery.extend(true, {}, graph.edges[index]);
+                    twoLoopEdges.push(tmpEdge);
+                    graph.edges.splice(index, 1);
+                    index--;
+                }
+            }
+ /*           for (var index2 = 0; index2 < graph.adjacencyList[to.number].neighborsOut.length; index2++) {
                 if (graph.adjacencyList[to.number].neighborsOut[index2][0] === from.label) {
                     $.each(graph.adjacencyList[to.number].neighborsIn, function (removeIndex1) {
                         if (this[0] === from.label) graph.adjacencyList[to.number].neighborsIn.splice(removeIndex1, 1);
@@ -333,7 +344,7 @@ function removeAndStoreTwoLoops(graph) {
                     graph.edges.splice(index, 1);
                     index--;
                 }
-            }
+            }*/
         }
     };
 
@@ -664,15 +675,30 @@ function checkMostEdgesInPreviousLayer(graph,previousLayer) {
 
 /****************************** Proper layering *****************************************************/
 function makeProperLayering(graph) {
-    var dummyVertices, dummyEdges;
+    var dummyVertices = [], dummyEdges = [];
     $.each(graph.edges, function () {
         var to, from;
         var currentEdge = this;
         //Get layer for both edges
         $.each(graph.vertices, function () {
-            if(currentEdge)
+            if (currentEdge.from === this.label) from = this;
+            else if (currentEdge.to === this.label) to = this;
         });
 
+        var differenceInLayers = Math.abs(from.layer - to.layer);
+        if (differenceInLayers > 1) {
+            for(var index = 0; index < differenceInLayers; index++){
+                
+            }
+        }
     });
 };
+
+function createDummyVertex() {
+
+}
+
+function createDummyEdge() {
+
+}
 /****************************** End of proper layering **********************************************/
