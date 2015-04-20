@@ -215,6 +215,8 @@ function constructGraph() {
 
     //Step 2 - Assign vertices to layers
     var layeredVertices = longestPath(graph);
+    graph.vertices = layeredVertices[0];
+    graph['layering'] = layeredVertices[1];
     var tmp = 4;
 };
 /************************ Graph construction end **************************************/
@@ -585,7 +587,7 @@ function reverseEdgesInFas(fas) {
 
 /****************************** Longest-path algrithm ************************************************/
 function longestPath(graph) {
-    var alreadyPicked = [];
+    var alreadyPicked = [],layering = [],currentLayerVertices = [];
     var currentLayer = 1;
     var previousLayer = getSinks([], graph);
 
@@ -593,24 +595,39 @@ function longestPath(graph) {
     $.each(previousLayer, function () {
         this['layer'] = 0;
         alreadyPicked.push(this);
+        currentLayerVertices.push(this);
         removeVertex("source", graph, this);
+        
     });
 
+    layering.push(currentLayerVertices);
+    currentLayerVertices = [];
+
+    //As long as there is edges left in the graph
     while (graph.vertices.length > 0) {
+
+        //Get vertex with maximum out degree
         var currentMaxVertex = checkMostEdgesInPreviousLayer(graph, previousLayer);
+
+        //If vertex is found add to current layer being built and add to the already pick list
         if (currentMaxVertex !== undefined) {
             currentMaxVertex['layer'] = currentLayer;
             alreadyPicked.push(currentMaxVertex);
+            currentLayerVertices.push(currentMaxVertex);
             removeVertex("source",graph,currentMaxVertex);
         }
-        if (currentMaxVertex === undefined) {
+
+        //If no vertex is selected add the current layer
+        if (currentMaxVertex === undefined || graph.vertices.length === 0) {
             currentLayer++;
-            var tmpPrevious = $.merge(previousLayer,alreadyPicked);
+            layering.push(currentLayerVertices);
+            var tmpPrevious = $.merge(previousLayer, currentLayerVertices);
+            currentLayerVertices = [];
         }
     };
 
 
-    return alreadyPicked;
+    return [alreadyPicked,layering];
    
 }
 
@@ -620,12 +637,13 @@ function checkMostEdgesInPreviousLayer(graph,previousLayer) {
 
     for (var index = 0; index < graph.vertices.length; index++) {
 
-        //Select vertex with most outgoing edges in the previous layer
         var currentVertex = graph.vertices[index];
         var currentVertexOutgoingEdges = graph.adjacencyList[currentVertex.number].neighborsOut;
         var currentMaxCount = 0;
+
+        //Select vertex with most outgoing edges in the previous layer
         $.each(currentVertexOutgoingEdges, function () {
-            tmpVertex = this;
+            var tmpVertex = this;
             $.each(previousLayer, function () {
                 if (this.label === tmpVertex[0]) {
                     currentMaxCount++;
@@ -643,3 +661,18 @@ function checkMostEdgesInPreviousLayer(graph,previousLayer) {
 
 
 /****************************** End of longest path   ************************************************/
+
+/****************************** Proper layering *****************************************************/
+function makeProperLayering(graph) {
+    var dummyVertices, dummyEdges;
+    $.each(graph.edges, function () {
+        var to, from;
+        var currentEdge = this;
+        //Get layer for both edges
+        $.each(graph.vertices, function () {
+            if(currentEdge)
+        });
+
+    });
+};
+/****************************** End of proper layering **********************************************/
