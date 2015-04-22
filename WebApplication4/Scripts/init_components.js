@@ -224,10 +224,15 @@ function constructGraph() {
     addDummyEdgesToGraph(graph, dummyVerticesAndEdges[1]);
 
     //Step 2.2 - Remove leftover edges in the graph
-    removeAlledges(graph)
+    removeAllNeighbors(graph);
     
+    //Step 2.3 - Add all the edges, original + dummies
+    setNeighbors(graph);
+
     //Step 3 - Edge crossing minimization
-    edge
+    edgeCrossingMinimization(graph);
+
+    
 };
 /************************ Graph construction end **************************************/
 
@@ -610,8 +615,11 @@ function addDummyEdgesToGraph(graph,dummies) {
     $.merge(graph.edges, dummies);
 };
 
-function removeAllEdges() {
-    for
+function removeAllNeighbors(graph) {
+    $.each(graph.adjacencyList, function () {
+        this.neighborsIn = [];
+        this.neighborsOut = [];
+    });
 };
 /****************************** Longest-path algrithm ************************************************/
 function longestPath(graph) {
@@ -731,8 +739,6 @@ function makeProperLayering(graph) {
 
             graph.edges.splice(index, 1);
             index--;
-
-            $.merge(dummyVertices,tmpDummies);
         }
     };
     return [dummyVertices, dummyEdges];
@@ -768,7 +774,7 @@ function updateAdjacencyList(graph, from, to) {
 /****************************** End of proper layering **********************************************/
 
 /****************************** Edge crossing minimization ******************************************/
-function edgeMinimization(graph) {
+function edgeCrossingMinimization(graph) {
 
     //Until convergence to some value
     sweepDownUp(graph);
@@ -784,12 +790,12 @@ function barycenter(graph,currentLayer,incidentMatrix) {
     var colValue = 0, numberOfEdges = 0;
     for (var row = 0; row < incidentMatrix.length; row++) {
         for (var col = 0; col < incidentMatrix[row].length; col++) {
-            if (matrix[row][col] === 1) {
+            if (incidentMatrix[row][col] === 1) {
                 colValue += col;
                 numberOfEdges++;
             }
         }
-        graph.layering[currentLayer][row]['barycenter'] = ({barycenter : (colValue / numberOfEdges)});
+        graph.layering[currentLayer][row]['barycenter'] = colValue / numberOfEdges;
     }
 };
 
@@ -802,7 +808,7 @@ function removeBarycenter(graph,currentLayer) {
 function sweepDownUp(graph) {
     //Sweep down -> up
     for (var currentLayer = 1; currentLayer < graph.layering.length; currentLayer++) {
-        var incidentMatrix = fillIncidentMatrix(graph.layering[currentLayer], graph.layering[currentlayer - 1]);
+        var incidentMatrix = fillIncidentMatrix(graph,graph.layering[currentLayer], graph.layering[currentLayer - 1]);
         barycenter(graph, currentLayer, incidentMatrix);
         graph.layering[currentLayer].sort(sortingOnBarycenter);
         removeBarycenter(graph, currentLayer);
@@ -829,6 +835,7 @@ function fillIncidentMatrix(graph,nonFixed, fixed) {
             }
         }
     }
+    return matrix;
 };
 
 function createIncidentMatrix(nonFixed, fixed) {
@@ -841,10 +848,12 @@ function createIncidentMatrix(nonFixed, fixed) {
 
 function chechIfEdgeExists(graph,vertex,neighbor) {
     var exists = false;
-    for (var index = 0; i < graph.adjacencyList[vertex.number].neighborsOut.length; index++) {
+    for (var index = 0; index < graph.adjacencyList[vertex.number].neighborsOut.length; index++) {
         if (graph.adjacencyList[vertex.number].neighborsOut[index][0] === neighbor.label) {
             exists = true;
         }
+    };
+    for (var index = 0; index < graph.adjacencyList[vertex.number].neighborsIn.length; index++) {
         if (graph.adjacencyList[vertex.number].neighborsIn[index][0] === neighbor.label) {
             exists = true;
         }
@@ -853,10 +862,10 @@ function chechIfEdgeExists(graph,vertex,neighbor) {
 };
 
 function sortingOnBarycenter(a,b){
-    if(a[a.length-1] === b[b.length-1]){
+    if(a.barycenter === b.barycenter){
         return 0;
     }else{
-        return (a[a.length-1] < b[b.length-1]) ? -1 : 1;
+        return (a.barycenter < b.barycenter) ? -1 : 1;
     }
 };
 
