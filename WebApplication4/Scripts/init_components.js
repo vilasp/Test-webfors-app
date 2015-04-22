@@ -777,30 +777,79 @@ function updateAdjacencyList(graph, from, to) {
 function edgeMinimization(graph) {
 
     //Until convergence to some value
-
+    sweepDownUp(graph);
+    sweepUpDown(graph);
+    
    
     
 };
 
-function barycenter(layer1,layer2) {
-    var incidentMatrix = [[]];
+function barycenter(incidentMatrix) {
+    var barycenter = 0, numberOfEdges = 0;
+    for (var row = 0; row < incidentMatrix.length; row++) {
+        for (var col = 0; col < incidentMatrix[row].length; col++) {
 
+        }
+    }
 };
 
-function sweepDownUp(incidentMatrix) {
+function sweepDownUp(graph) {
     //Sweep down -> up
-    for (var currentLayer = 0; currentLayer < graph.layering.length; currentLayer++) {
-
+    for (var currentLayer = 1; currentLayer < graph.layering.length; currentLayer++) {
+        var incidentMatrix = fillIncidentMatrix(graph.layering[currentLayer], graph.layering[currentlayer - 1]);
+        var baryCenter = barycenter(incidentMatrix);
     };
 };
 
-function sweepUpDown(incidentMatrix) {
+function sweepUpDown(graph) {
     //Sweep up -> down
     for (var currentLayer = graph.layering.length - 1; currentLayer !== 0; currentLayer--) {
-
+        
     };
 };
 
-function calculateIncidentMatrix(layer)
+function fillIncidentMatrix(graph,nonFixed, fixed) {
+    var matrix = createIncidentMatrix(nonFixed, fixed);
+
+    for (var row = 0; row < nonFixed.length; row++) {
+        for (var col = 0; col < fixed.length; col++) {
+            if (chechIfEdgeExists(graph, nonFixed[row], fixed[col])) {
+                matrix[row][col] = 1;
+            }
+            else {
+                matrix[row][col] = 0;
+            }
+        }
+    }
+};
+
+function createIncidentMatrix(nonFixed, fixed) {
+    var matrix = new Array(nonFixed.length);
+    for (var row = 0; row < matrix.length; row++) {
+        matrix[row] = new Array(fixed.length);
+    };
+    return matrix;
+};
+
+function chechIfEdgeExists(graph,vertex,neighbor) {
+    var exists = false;
+    for (var index = 0; i < graph.adjacencyList[vertex.number].neighborsOut.length; index++) {
+        if (graph.adjacencyList[vertex.number].neighborsOut[index][0] === neighbor.label) {
+            exists = true;
+        }
+        if (graph.adjacencyList[vertex.number].neighborsIn[index][0] === neighbor.label) {
+            exists = true;
+        }
+    }
+    return exists;
+};
+
+function sortingOnBarycenter(a,b){
+    if(a[a.length-1] === b[b.length-1]){
+        return 0;
+    }else{
+        return (a[a.length-1] < b[b.length-1]) ? -1 : a;
+    }
+};
 
 /****************************** End of edge crossing minimization ***********************************/
