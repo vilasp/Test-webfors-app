@@ -778,11 +778,11 @@ function updateAdjacencyList(graph, from, to) {
 function edgeCrossingMinimization(graph) {
 
     //Until convergence to some value
-    sweepDownUp(graph);
-    sweepUpDown(graph);
-    
-   
-    
+    var convergenceValue = 100;
+    for (var i = 0; i < convergenceValue; i++) {
+        sweepDownUp(graph);
+        sweepUpDown(graph);
+    };
 };
 
 function barycenter(graph,currentLayer,incidentMatrix) {
@@ -791,10 +791,13 @@ function barycenter(graph,currentLayer,incidentMatrix) {
         var colValue = 0, numberOfEdges = 0;
         for (var col = 0; col < incidentMatrix[row].length; col++) {
             if (incidentMatrix[row][col] === 1) {
-                colValue += col;
+                colValue += (col+1);
                 numberOfEdges++;
             }
         }
+
+        //Prevent NaN
+        if (colValue === 0) colValue = -1;
         graph.layering[currentLayer][row]['barycenter'] = colValue / numberOfEdges;
     }
 };
