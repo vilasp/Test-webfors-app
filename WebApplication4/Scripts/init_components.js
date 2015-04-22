@@ -751,6 +751,7 @@ function createDummyVertex(graph,fromParent) {
     newDummyVertex['layer'] = fromParent.layer - 1;
     newDummyVertex['dummy'] = true;
     graph.vertices.push(newDummyVertex);
+    graph.layering[newDummyVertex.layer].push(newDummyVertex);
     graph.adjacencyList.push({neighborsIn : [], neighborsOut : []});
     return newDummyVertex;
 };
@@ -785,10 +786,9 @@ function edgeCrossingMinimization(graph) {
 };
 
 function barycenter(graph,currentLayer,incidentMatrix) {
-
-    var ordering = [];
-    var colValue = 0, numberOfEdges = 0;
+    
     for (var row = 0; row < incidentMatrix.length; row++) {
+        var colValue = 0, numberOfEdges = 0;
         for (var col = 0; col < incidentMatrix[row].length; col++) {
             if (incidentMatrix[row][col] === 1) {
                 colValue += col;
@@ -800,7 +800,7 @@ function barycenter(graph,currentLayer,incidentMatrix) {
 };
 
 function removeBarycenter(graph,currentLayer) {
-    for (var row = 0; row < graph.layering[currentLayer].length - 1; row++) {
+    for (var row = 0; row < graph.layering[currentLayer].length; row++) {
         delete graph.layering[currentLayer][row]['barycenter'];
     };
 }
@@ -817,8 +817,11 @@ function sweepDownUp(graph) {
 
 function sweepUpDown(graph) {
     //Sweep up -> down
-    for (var currentLayer = graph.layering.length - 1; currentLayer !== 0; currentLayer--) {
-        
+    for (var currentLayer = graph.layering.length - 2; currentLayer > -1; currentLayer--) {
+        var incidentMatrix = fillIncidentMatrix(graph, graph.layering[currentLayer], graph.layering[currentLayer + 1]);
+        barycenter(graph, currentLayer, incidentMatrix);
+        graph.layering[currentLayer].sort(sortingOnBarycenter);
+        removeBarycenter(graph, currentLayer);
     };
 };
 
