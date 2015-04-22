@@ -221,8 +221,13 @@ function constructGraph() {
     //Step 2.1 - Make proper layering
     var dummyVerticesAndEdges = makeProperLayering(graph);
     addDummyVerticesToGraphAndLayering(graph,dummyVerticesAndEdges[0]);
-    addDummyEdgesToGraph(graph,dummyVerticesAndEdges[1]);
-    var tmp = 0;
+    addDummyEdgesToGraph(graph, dummyVerticesAndEdges[1]);
+
+    //Step 2.2 - Remove leftover edges in the graph
+    removeAlledges(graph)
+    
+    //Step 3 - Edge crossing minimization
+    edge
 };
 /************************ Graph construction end **************************************/
 
@@ -335,21 +340,6 @@ function removeAndStoreTwoLoops(graph) {
                     index--;
                 }
             }
- /*           for (var index2 = 0; index2 < graph.adjacencyList[to.number].neighborsOut.length; index2++) {
-                if (graph.adjacencyList[to.number].neighborsOut[index2][0] === from.label) {
-                    $.each(graph.adjacencyList[to.number].neighborsIn, function (removeIndex1) {
-                        if (this[0] === from.label) graph.adjacencyList[to.number].neighborsIn.splice(removeIndex1, 1);
-                    });
-
-                    graph.adjacencyList[to.number].neighborsOut.splice(index2, 1);
-
-                    //Remove the reversed edge form the graph only if 
-                    var tmpEdge = jQuery.extend(true, {}, graph.edges[index]);
-                    twoLoopEdges.push(tmpEdge);
-                    graph.edges.splice(index, 1);
-                    index--;
-                }
-            }*/
         }
     };
 
@@ -619,6 +609,10 @@ function addDummyVerticesToGraphAndLayering(graph,dummies) {
 function addDummyEdgesToGraph(graph,dummies) {
     $.merge(graph.edges, dummies);
 };
+
+function removeAllEdges() {
+    for
+};
 /****************************** Longest-path algrithm ************************************************/
 function longestPath(graph) {
     var alreadyPicked = [],layering = [],currentLayerVertices = [];
@@ -784,20 +778,34 @@ function edgeMinimization(graph) {
     
 };
 
-function barycenter(incidentMatrix) {
-    var barycenter = 0, numberOfEdges = 0;
+function barycenter(graph,currentLayer,incidentMatrix) {
+
+    var ordering = [];
+    var colValue = 0, numberOfEdges = 0;
     for (var row = 0; row < incidentMatrix.length; row++) {
         for (var col = 0; col < incidentMatrix[row].length; col++) {
-
+            if (matrix[row][col] === 1) {
+                colValue += col;
+                numberOfEdges++;
+            }
         }
+        graph.layering[currentLayer][row]['barycenter'] = ({barycenter : (colValue / numberOfEdges)});
     }
 };
+
+function removeBarycenter(graph,currentLayer) {
+    for (var row = 0; row < graph.layering[currentLayer].length - 1; row++) {
+        delete graph.layering[currentLayer][row]['barycenter'];
+    };
+}
 
 function sweepDownUp(graph) {
     //Sweep down -> up
     for (var currentLayer = 1; currentLayer < graph.layering.length; currentLayer++) {
         var incidentMatrix = fillIncidentMatrix(graph.layering[currentLayer], graph.layering[currentlayer - 1]);
-        var baryCenter = barycenter(incidentMatrix);
+        barycenter(graph, currentLayer, incidentMatrix);
+        graph.layering[currentLayer].sort(sortingOnBarycenter);
+        removeBarycenter(graph, currentLayer);
     };
 };
 
@@ -848,7 +856,7 @@ function sortingOnBarycenter(a,b){
     if(a[a.length-1] === b[b.length-1]){
         return 0;
     }else{
-        return (a[a.length-1] < b[b.length-1]) ? -1 : a;
+        return (a[a.length-1] < b[b.length-1]) ? -1 : 1;
     }
 };
 
