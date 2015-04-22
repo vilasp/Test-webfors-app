@@ -156,11 +156,11 @@ function getTestEdges() {
     var edge16 = { "to": "node11", "from": "node10" };
     var edge17 = { "to": "node11", "from": "node11" };
     var edge18 = { "to": "node10", "from": "node10" };
-    var edge19 = { "to": "node1", "from": "node5" };
-    var edge20 = { "to": "node2", "from": "node10" };
-    var edge21 = { "to": "node4", "from": "node8" };
-    //return [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
-    return [edge0, edge1, edge2, edge3, edge20, edge21, edge4, edge5, edge6, edge7, edge8, edge9, edge19, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];//
+    //var edge19 = { "to": "node1", "from": "node5" };
+    //var edge20 = { "to": "node2", "from": "node10" };
+    //var edge21 = { "to": "node4", "from": "node8" };
+    return [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
+    //return [edge0, edge1, edge2, edge3, edge20, edge21, edge4, edge5, edge6, edge7, edge8, edge9, edge19, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];//
 };
 
 function getTestVertices() {
@@ -220,6 +220,8 @@ function constructGraph() {
 
     //Step 2.1 - Make proper layering
     var dummyVerticesAndEdges = makeProperLayering(graph);
+    addDummyVerticesToGraphAndLayering(graph,dummyVerticesAndEdges[0]);
+    addDummyEdgesToGraph(graph,dummyVerticesAndEdges[1]);
     var tmp = 0;
 };
 /************************ Graph construction end **************************************/
@@ -607,6 +609,16 @@ function getHighestEdgeLabel(graph) {
     return undefined
 };
 
+function addDummyVerticesToGraphAndLayering(graph,dummies) {
+    $.each(dummies, function () {
+        graph.vertices.push(this);
+        graph.layering[this.layer].push(this);
+    });
+};
+
+function addDummyEdgesToGraph(graph,dummies) {
+    $.merge(graph.edges, dummies);
+};
 /****************************** Longest-path algrithm ************************************************/
 function longestPath(graph) {
     var alreadyPicked = [],layering = [],currentLayerVertices = [];
@@ -708,17 +720,17 @@ function makeProperLayering(graph) {
                 var tmpEdge;
                 if (index2 === 0) {
                     tmpEdge = createDummyEdge(from, tmpDummies[index2], true);
-                    updateAdjacencyList(graph, from, tmpDummies[index2]);
+                    //updateAdjacencyList(graph, from, tmpDummies[index2]);
                 }
 
                 else if (index2 < span - 1) {
                     tmpEdge = createDummyEdge(tmpDummies[index2 - 1], tmpDummies[index2], true);
-                    updateAdjacencyList(graph, tmpDummies[index2 - 1], tmpDummies[index2]);
+                    //updateAdjacencyList(graph, tmpDummies[index2 - 1], tmpDummies[index2]);
                 }
 
                 else {
                     tmpEdge = createDummyEdge(tmpDummies[index2-1], to, true);
-                    updateAdjacencyList(graph, tmpDummies[index2-1], to);
+                    //updateAdjacencyList(graph, tmpDummies[index2-1], to);
                 }
                 dummyEdges.push(tmpEdge);
             };
@@ -726,7 +738,7 @@ function makeProperLayering(graph) {
             graph.edges.splice(index, 1);
             index--;
 
-            dummyVertices.push(tmpDummies);
+            $.merge(dummyVertices,tmpDummies);
         }
     };
     return [dummyVertices, dummyEdges];
@@ -760,3 +772,35 @@ function updateAdjacencyList(graph, from, to) {
     graph.adjacencyList[to.number].neighborsIn.push([from.label,from.number])
 };
 /****************************** End of proper layering **********************************************/
+
+/****************************** Edge crossing minimization ******************************************/
+function edgeMinimization(graph) {
+
+    //Until convergence to some value
+
+   
+    
+};
+
+function barycenter(layer1,layer2) {
+    var incidentMatrix = [[]];
+
+};
+
+function sweepDownUp(incidentMatrix) {
+    //Sweep down -> up
+    for (var currentLayer = 0; currentLayer < graph.layering.length; currentLayer++) {
+
+    };
+};
+
+function sweepUpDown(incidentMatrix) {
+    //Sweep up -> down
+    for (var currentLayer = graph.layering.length - 1; currentLayer !== 0; currentLayer--) {
+
+    };
+};
+
+function calculateIncidentMatrix(layer)
+
+/****************************** End of edge crossing minimization ***********************************/
