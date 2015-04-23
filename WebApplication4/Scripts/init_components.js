@@ -797,7 +797,7 @@ function barycenter(graph,currentLayer,incidentMatrix) {
         }
 
         //Prevent NaN
-        if (colValue === 0) colValue = -1;
+        if (colValue === 0) colValue = -1000;
         graph.layering[currentLayer][row]['barycenter'] = colValue / numberOfEdges;
     }
 };
@@ -876,3 +876,99 @@ function sortingOnBarycenter(a,b){
 };
 
 /****************************** End of edge crossing minimization ***********************************/
+
+/****************************** Edge Straightening *************************************************/
+function edgeStraightening() {
+
+
+    //Set x-coordinate of all vertices in the graph
+    setWithinLayerXCoordinate(graph);
+
+    //Until convergence to some value
+    var convergenceValue = 100;
+    for (var i = 0; i < convergenceValue; i++) {
+        sweepXCoordinateDownUp(graph);
+        sweepXcoordinateUpDown(graph);
+    };
+};
+
+function setWithinLayerXCoordinate(graph) {
+    for (var layer = 0; layer = graph.layering.length; layer++){
+        for(var positionInLayer = 0; positionInLayer < graph.layering[layer].length; positionInLayer++){
+
+            //Set x-coordinate within layer
+            graph.layering[layer][positionInLayer]['layerX'] = positionInLayer;
+            graph.layering[layer][positionInLayer]['xCoordinate'] = positionInLayer;
+        };
+    };
+};
+
+function sweepXCoordinateDownUp() {
+    //Sweep down -> up
+    for (var currentLayer = 1; currentLayer < graph.layering.length; currentLayer++) {
+        var incidentMatrix = fillIncidentMatrix(graph, graph.layering[currentLayer], graph.layering[currentLayer - 1]);
+        setPriority(graph,'downToUp',currentLayer);
+        barycenter(graph, currentLayer, incidentMatrix);
+        setXcoordinate(graph,currentLayer);
+        graph.layering[currentLayer].sort(sortingOnPriorityThenPositionWithinLayer);
+
+        removeBarycenter(graph, currentLayer);
+    };
+};
+
+function sweepXCoordinateUpDown() {
+    //Sweep up -> down
+    for (var currentLayer = graph.layering.length - 2; currentLayer > -1; currentLayer--) {
+        var incidentMatrix = fillIncidentMatrix(graph, graph.layering[currentLayer], graph.layering[currentLayer + 1]);
+        setPriority(graph, currentLayer, 'upToDown');
+        barycenter(graph, currentLayer, incidentMatrix);
+        graph.layering[currentLayer].sort(sortingOnBarycenter);
+        removeBarycenter(graph, currentLayer);
+    };
+};
+
+function xCoordinateBarycenter(graph, currentLayer, incidentMatrix) {
+
+    for (var row = 0; row < incidentMatrix.length; row++) {
+        var colValue = 0, numberOfEdges = 0;
+        for (var col = 0; col < incidentMatrix[row].length; col++) {
+            if (incidentMatrix[row][col] === 1) {
+                colValue += (col + 1);
+                numberOfEdges++;
+            }
+        }
+
+        //Prevent NaN
+        if (colValue === 0) colValue = -10000;
+        graph.layering[currentLayer][row]['barycenter'] = colValue / numberOfEdges;
+    }
+};
+
+function setXCoordinate(graph,currentLayer){
+
+};
+
+function setPriority(graph,currentLayer,type) {
+    for (var position = 0; position < graph.layering[currentLayer].length; position++) {
+        var currentVertex = graph.layering[currentLayer][position];
+        if(type === 'downToUp'){
+            (currentVertex.dummy) ? currentVertex['priority'] = 20000 : currentVertex['priority'] = graph.adjacencyList[currentVertex.number].neighborsOut.length;
+        }
+        else if (type === 'upToDown') {
+            (currentVertex.dummy) ? currentVertex['priority'] = 20000 : currentVertex['priority'] = graph.adjacencyList[currentVertex.number].neighborsIn.length;
+        }
+    };
+};
+
+function sortingOnPriorityThenPositionWithinLayer(a,b) {
+    var aPriority = a.priority;
+    var bPriority = b.priority;
+
+    var aLayerx = a.layerX ;
+    var bLayerX = b.layerX;
+    
+    return (a.priority > b.priority) ? -1 : 1;
+    return (a.layerX < b.layerX) ? -1 : 1;
+    return 0;
+};
+/****************************** End of edge straightening *******************************************/
