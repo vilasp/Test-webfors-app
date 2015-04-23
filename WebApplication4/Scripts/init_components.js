@@ -898,7 +898,7 @@ function setWithinLayerXCoordinate(graph) {
 
             //Set x-coordinate within layer
             graph.layering[layer][positionInLayer]['layerX'] = positionInLayer;
-            graph.layering[layer][positionInLayer]['xCoordinate'] = positionInLayer;
+            graph.layering[layer][positionInLayer]['xCoordinate'] = positionInLayer + 50;
         };
     };
 };
@@ -908,9 +908,9 @@ function sweepXCoordinateDownUp() {
     for (var currentLayer = 1; currentLayer < graph.layering.length; currentLayer++) {
         var incidentMatrix = fillIncidentMatrix(graph, graph.layering[currentLayer], graph.layering[currentLayer - 1]);
         setPriority(graph,'downToUp',currentLayer);
-        barycenter(graph, currentLayer, incidentMatrix);
-        setXcoordinate(graph,currentLayer);
+        xCoordinateBarycenter(graph, currentLayer, incidentMatrix);
         graph.layering[currentLayer].sort(sortingOnPriorityThenPositionWithinLayer);
+        setXcoordinate(graph, currentLayer);
 
         removeBarycenter(graph, currentLayer);
     };
@@ -927,24 +927,55 @@ function sweepXCoordinateUpDown() {
     };
 };
 
-function xCoordinateBarycenter(graph, currentLayer, incidentMatrix) {
+function xCoordinateBarycenter(graph, currentLayer, incidentMatrix,neighborLayer) {
 
     for (var row = 0; row < incidentMatrix.length; row++) {
         var colValue = 0, numberOfEdges = 0;
         for (var col = 0; col < incidentMatrix[row].length; col++) {
             if (incidentMatrix[row][col] === 1) {
-                colValue += (col + 1);
+                colValue += neighborLayer[col].xCoordinate;
                 numberOfEdges++;
             }
         }
-
-        //Prevent NaN
-        if (colValue === 0) colValue = -10000;
-        graph.layering[currentLayer][row]['barycenter'] = colValue / numberOfEdges;
+        graph.layering[currentLayer][row]['xCoordinate'] = colValue / numberOfEdges;
     }
 };
 
 function setXCoordinate(graph,currentLayer){
+    for (var current = 0; current < graph.layering[currentLayer]; current++){
+        var currentVertex = graph.layering[currentLayer][current];
+        //Check if current barrycenter already exists
+
+        //Is it currentVertex? = true, ignore and keep current position
+
+        //false check if priority is lower than currrentVertex, if so move the other node in correct position from current node
+
+
+        if (checkValidPositionOfVertex(graph, currentVertex)) {
+
+        }
+
+
+    }
+};
+
+function checkValidPositionBarycenter(graph, currentVertex, currentLayer) {
+    var currenBarycenter = Math.round(currentVertex.position);
+    for (var neighbor = 0; neighbor < graph.layering[currentLayer].length; neighbor++) {
+        if (currenBarycenter === graph.layering[currentLayer][neighbor].position) {
+            if (currentVertex.label === graph.layering[currentLayer][neighbor].label) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+    return true;
+
+};
+
+function checkValidPositionOfVertex(graph,currentVertex) {
+    var currenBarycenter = Math.round(currentVertex.barycenter);
 
 };
 
