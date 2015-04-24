@@ -945,7 +945,16 @@ function setXCoordinate(graph,currentLayer){
     for (var current = 0; current < graph.layering[currentLayer]; current++){
         var currentVertex = graph.layering[currentLayer][current];
         //Check if current barrycenter already exists
+        if (checkValidPositionBarycenter(graph, currentVertex, currentLayer)) {
 
+        } else {
+            if (checkValidPlacement(graph, currentVertex, currentLayer)) {
+
+            } else {
+
+            }
+
+        }
         //Is it currentVertex? = true, ignore and keep current position
 
         //false check if priority is lower than currrentVertex, if so move the other node in correct position from current node
@@ -974,7 +983,7 @@ function checkValidPositionBarycenter(graph, currentVertex, currentLayer) {
 
 };
 
-function checkValidPositionOfVertex(graph,currentVertex) {
+function checkValidPlacement(graph,currentVertex) {
     var currenBarycenter = Math.round(currentVertex.barycenter);
 
 };
