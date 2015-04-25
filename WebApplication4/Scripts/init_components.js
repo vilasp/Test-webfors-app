@@ -232,6 +232,10 @@ function constructGraph() {
     //Step 3 - Edge crossing minimization
     edgeCrossingMinimization(graph);
 
+    //Step 4 - x-coordinate assignment
+    edgeStraightening(graph);
+    var a = 5;
+
     
 };
 /************************ Graph construction end **************************************/
@@ -718,7 +722,9 @@ function makeProperLayering(graph) {
                 else
                     tmpDummies.push(createDummyVertex(graph, tmpDummies[index1-1]));
             };
+
             for (var index2 = 0; index2 < span; index2++) {
+
                 var tmpEdge;
                 if (index2 === 0) {
                     tmpEdge = createDummyEdge(from, tmpDummies[index2], true);
@@ -885,11 +891,10 @@ function edgeStraightening() {
     setWithinLayerXCoordinate(graph);
 
     //Until convergence to some value
-    var convergenceValue = 100;
-    for (var i = 0; i < convergenceValue; i++) {
-        sweepXCoordinateDownUp(graph);
-        sweepXcoordinateUpDown(graph);
-    };
+    sweepXCoordinateDownUp(graph);
+    sweepXcoordinateUpDown(graph);
+    sweepXCoordinateDownUp(graph);
+
 };
 
 function setWithinLayerXCoordinate(graph) {
@@ -898,214 +903,219 @@ function setWithinLayerXCoordinate(graph) {
 
             //Set x-coordinate within layer
             graph.layering[layer][positionInLayer]['layerX'] = positionInLayer;
-            graph.layering[layer][positionInLayer]['xCoordinate'] = positionInLayer + 50;
+            graph.layering[layer][positionInLayer]['xCoordinate'] = positionInLayer;
         };
     };
 };
 
-function sweepXCoordinateDownUp() {
-    //Sweep down -> up
-    for (var currentLayer = 1; currentLayer < graph.layering.length; currentLayer++) {
-        var incidentMatrix = fillIncidentMatrix(graph, graph.layering[currentLayer], graph.layering[currentLayer - 1]);
-        setPriority(graph,'downToUp',currentLayer);
-        xCoordinateBarycenter(graph, currentLayer, incidentMatrix);
-        graph.layering[currentLayer].sort(sortingOnPriorityThenPositionWithinLayer);
-        setXcoordinate(graph, currentLayer);
-
-        removeBarycenter(graph, currentLayer);
-    };
-};
-
-function sweepXCoordinateUpDown() {
-    //Sweep up -> down
-    for (var currentLayer = graph.layering.length - 2; currentLayer > -1; currentLayer--) {
-        var incidentMatrix = fillIncidentMatrix(graph, graph.layering[currentLayer], graph.layering[currentLayer + 1]);
-        setPriority(graph, currentLayer, 'upToDown');
-        barycenter(graph, currentLayer, incidentMatrix);
-        graph.layering[currentLayer].sort(sortingOnBarycenter);
-        removeBarycenter(graph, currentLayer);
-    };
-};
-
-function xCoordinateBarycenter(graph, currentLayer, incidentMatrix,neighborLayer) {
-
-    for (var row = 0; row < incidentMatrix.length; row++) {
-        var colValue = 0, numberOfEdges = 0;
-        for (var col = 0; col < incidentMatrix[row].length; col++) {
-            if (incidentMatrix[row][col] === 1) {
-                colValue += neighborLayer[col].xCoordinate;
-                numberOfEdges++;
-            }
-        }
-        graph.layering[currentLayer][row]['barycenter'] = colValue / numberOfEdges;
-    }
-};
-
-function setXCoordinate(graph,currentLayer){
-    for (var current = 0; current < graph.layering[currentLayer]; current++){
-        var currentVertex = graph.layering[currentLayer][current];
-        //Check if current Barycenter already exists
-        if (checkValidPositionBarycenter(graph, currentVertex, currentLayer)) {
-            //keep current xcoordinate
-        } else {
-
-            //Check if we can place currentVertex at current position
-            if (checkHigherPriority(graph, currentVertex, currentLayer)) {
-
-                for (var checkNeighborPosition = currentVertex.barycenter; checkNeighborPosition < 100; checkNeighborPosition++) {
-                    if (!foundPosition) {
-
-                    }
-                    else
-                        break;
-                }
-                //check if we can move currentVertex and all vertices up to Barycenter
-                if (validMove(graph, currentVertex, currentLayer)) {
-                    //move currentVertex
-                } else {
-                    
-                }
-            } else {
-                //find position closest to Barycenter
-            }
-
-        }
-        //Is it currentVertex? = true, ignore and keep current position
-
-        //false check if priority is lower than currrentVertex, if so move the other node in correct position from current node
-
-
-        if (checkValidPositionOfVertex(graph, currentVertex)) {
-
-        }
-
-
-    }
-};
-
-function validMove(graph, currentVertex, currentLayer) {
-    var movingDirection = getMovingDirection(currentVertex);
-    var nunberOfVerticesInBetween = getNumberOfVerticesInBetween(currentVertex, currentLayer);
-    var numberOfPossiblePositions = 0;
-    var foundPosition = false;
-
-    if (movingDirection === 'left') {
-
-        //Get vertex with equal or higher priority on the left side of Barycenter with highest xcoordinate
-        var tmpHighestPriorityVertex = 0,
-            numberOfVerticesInBetweenBarycenterAndHighestPrioVertex = 0;
-        for (var i = 0; i < graph.layering[currentLayer].length;i++){
-            if (graph.layering[currentLayer][i].xCoordinate < currentVertex.barycenter) {
-
-                numberOfVerticesInBetweenBarycenterAndHighestPrioVertex++;
-
-
-                if (graph.layering[currentLayer][i].priority >= currentVertex.priority && graph.layering[currentLayer][i].xCoordinate > tmpHighestPriorityVertex) {
-                    tmpHighestPriorityVertex = graph.layering[currentLayer][i].xCoordinate;
-                }
-            }
-        }
-
-        //Check how many positions are is possibly open between Barycenter and 
-        var possibleopenings = (currentVertex.barycenter - 1 - tmpHighestPriorityVertex) - numberOfVerticesInBetweenBarycenterAndHighestPrioVertex;
-        if (possibleopenings >= nunberOfVerticesInBetween) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    if (movingDirection === 'right') {
-
-        //Get vertex with equal or higher priority on the left side of Barycenter with highest xcoordinate
-        var tmpHighestPriorityVertex = 0,
-            numberOfVerticesInBetweenBarycenterAndHighestPrioVertex = 0;
-        for (var i = 0; i < graph.layering[currentLayer].length; i++) {
-            if (graph.layering[currentLayer][i].xCoordinate > currentVertex.barycenter) {
-
-                numberOfVerticesInBetweenBarycenterAndHighestPrioVertex++;
-
-
-                if (graph.layering[currentLayer][i].priority >= currentVertex.priority && graph.layering[currentLayer][i].xCoordinate < tmpHighestPriorityVertex) {
-                    tmpHighestPriorityVertex = graph.layering[currentLayer][i].xCoordinate;
-                }
-            }
-        }
-
-        //Check how many positions are is possibly open between Barycenter and 
-        var possibleopenings = (tmpHighestPriorityVertex - currentVertex.barycenter + 1) - numberOfVerticesInBetweenBarycenterAndHighestPrioVertex;
-        if (possibleopenings >= nunberOfVerticesInBetween) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-
-};
-
-function getNumberOfVerticesInBetween(sweepDirection,currentVertex, currentLayer) {
-    
-    var verticesInBetween = 0;
-
-    for (var currentNeighbor = 0; currentNeighbor < graph.layering[currentLayer].length;currentNeighbor++){
-        if (graph.layering[currentNeighbor].xCoordinate >= currentVertex.barycenter && graph.layering[currentNeighbor].xCoordinate < currentVertex.xCoordinate) {
-            verticesInBetween++;
-        } else if (graph.layering[currentNeighbor].xCoordinate <= currentVertex.barycenter && graph.layering[currentNeighbor].xCoordinate > currentVertex.xCoordinate) {
-            verticesInBetween++;
-        }
-    };
-    return verticesInBetween
-};
-function getMovingDirection(currentVertex) {
-    return (currentVertex.barycenter < currentVertex.xCoordinate) ? 'left' : 'right';
-};
-
-function checkHigherPriority() {
-    var currenBarycenter = Math.round(currentVertex.position);
-    for (var neighbor = 0; neighbor < graph.layering[currentLayer].length; neighbor++) {
-
-        //If current vertex has a Barycenter equal to the current position in the layer
-        if (currenBarycenter === graph.layering[currentLayer][neighbor].position) {
-
-            //If it is currentVertex that holds the current position in the layer it is okay to keep the position or if currentVertex has higher priority
-            if (currentVertex.priority <= graph.layering[currentLayer][neighbor].priority) {
-                return false;
-            }
-        }
-    }
-    return true;
-};
-
-//Returns true if currenVertex is currently holding position at its Barycenter, if so we can safely keep that position
-function checkValidPositionBarycenter(graph, currentVertex, currentLayer) {
-    var currenBarycenter = Math.round(currentVertex.position);
-    for (var neighbor = 0; neighbor < graph.layering[currentLayer].length; neighbor++) {
-
-        //If current vertex has a Barycenter equal to the current position in the layer
-        if (currenBarycenter === graph.layering[currentLayer][neighbor].position) {
-
-            //If it is currentVertex that holds the current position in the layer it is okay to keep the position or if currentVertex has higher priority
-            if (currentVertex.label === graph.layering[currentLayer][neighbor].label) {
-                return true;
-            }
-        }
-    }
-    return false;
-};
-
-
-
-function setPriority(graph,currentLayer,type) {
+function setPriority(graph, currentLayer, type) {
     for (var position = 0; position < graph.layering[currentLayer].length; position++) {
         var currentVertex = graph.layering[currentLayer][position];
-        if(type === 'downToUp'){
+        if (type === 'downToUp') {
             (currentVertex.dummy) ? currentVertex['priority'] = 20000 : currentVertex['priority'] = graph.adjacencyList[currentVertex.number].neighborsOut.length;
         }
         else if (type === 'upToDown') {
             (currentVertex.dummy) ? currentVertex['priority'] = 20000 : currentVertex['priority'] = graph.adjacencyList[currentVertex.number].neighborsIn.length;
         }
     };
+};
+
+function sweepXCoordinateDownUp(graph) {
+    //Sweep down -> up
+    for (var currentLayer = 1; currentLayer < graph.layering.length; currentLayer++) {
+
+        //Get incident matrix for barycenter calculation
+        var incidentMatrix = fillIncidentMatrix(graph, graph.layering[currentLayer], graph.layering[currentLayer - 1]);
+
+        //Set priorities of the current layer
+        setPriority(graph, currentLayer, 'downToUp');
+
+        //Set the Barycenters of the current layer
+        xCoordinateBarycenter(graph, currentLayer, incidentMatrix);
+
+        //Copy the current layer into a new set for temporary removal
+        var tmpCurrentLayer = jQuery.extend(true, {}, graph.layering[currentLayer]);
+
+        //Assign x-coordinates to vertices in current layer
+        setXcoordinate(graph, tmpCurrentLayer,currentLayer);
+
+        //Remove Barycenter value from current layer
+        removeBarycenter(graph, currentLayer);
+    };
+};
+
+function sweepXCoordinateUpDown(graph) {
+    //Sweep up -> down
+    for (var currentLayer = graph.layering.length - 2; currentLayer > -1; currentLayer--) {
+        //Get incident matrix for barycenter calculation
+        var incidentMatrix = fillIncidentMatrix(graph, graph.layering[currentLayer], graph.layering[currentLayer + 1]);
+
+        //Set priorities of the current layer
+        setPriority(graph, currentLayer, 'upToDown');
+
+        //Set the Barycenters of the current layer
+        xCoordinateBarycenter(graph, currentLayer, incidentMatrix);
+
+        //Copy the current layer into a new set for temporary removal
+        var tmpCurrentLayer = jQuery.extend(true, {}, graph.layering[currentLayer]);
+
+        //Assign x-coordinates to vertices in current layer
+        setXcoordinate(graph, tmpCurrentLayer, currentLayer);
+
+        //Remove Barycenter value from current layer
+        removeBarycenter(graph, currentLayer);
+    };
+};
+
+function xCoordinateBarycenter(graph, currentLayer, incidentMatrix) {
+
+    for (var row = 0; row < incidentMatrix.length; row++) {
+        var colValue = 0, numberOfEdges = 0;
+        for (var col = 0; col < incidentMatrix[row].length; col++) {
+            if (incidentMatrix[row][col] === 1) {
+                colValue += (col + 1);
+                numberOfEdges++;
+            }
+        }
+
+        //Prevent NaN
+        if (colValue === 0) colValue = -1000;
+
+        graph.layering[currentLayer][row]['barycenter'] = Math.round(colValue / numberOfEdges);
+    }
+};
+
+
+
+function setXCoordinate(graph,tmpCurrentLayer,currentLayer){
+    for (var current = 0; current < tmpCurrentLayer.length; current++) {
+
+        var mk = [],
+            currentHigh = 0,
+            currentVertex = undefined;
+
+        for (var initialXCoordinate = 0; initialXCoordinate < tmpCurrentLayer.length; initialXCoordinate++) {
+            mk.push(tmpCurrentLayer[initialXCoordinate].xCoordinate);
+            if (tmpCurrentLayer[initialXCoordinate].priority > currentHigh) {
+                currentHigh = tmpCurrentLayer[initialXCoordinate].priority;
+                currentVertex = tmpCurrentLayer[initialXCoordinate];
+            }
+        }
+
+        //Is the vertex placed on the right side of its Barycenter
+        if ((currentVertex.barycenter - mk[currentVertex.layerX]) < 0) {
+            leftOfItsBarycenter(currentVertex,tmpCurrentLayer,mk);
+        }
+            //On the left side of its Barycenter
+        else if ((currentVertex.barycenter - mk) > 0) {
+            rightOfItsBarycenter(graph,currentVertex,tmpCurrentLayer,mk);
+        }
+        
+        //Store the x-coordinate of the current vertex and remove it from the temporary list
+        currentLayer[currentVertex.layerX].xCoordinate = mk[currentVertex.layerX];
+        tmpCurrentLayer.splice(currentVertex.layerX,1);
+
+    }
+};
+
+function leftOfItsBarycenter(currentVertex,currentLayer,mk) {
+
+    var current = currentVertex.layerX;
+
+    //The leftmost vertex in the layer
+    if (current === 0) {
+        mk[current] = currentVertex.barycenter;
+        return;
+    } else {
+
+        //Get vertex closest to the left x-coordinate from currenVertex with equal or lager priority
+        var k = -1
+
+        for (var prioVertex = 0; prioVertex < current; prioVertex++) {
+            if (currentLayer[prioVertex].priority >= currentVertex.priority) {
+                k = prioVertex;
+            }
+        }
+
+        //If there is a vertex on the left of currentVertex with higher or equal priority
+        if (k !== -1) {
+            if(mk[k] >= currentVertex.barycenter + k - current){
+                
+                for (var l = 1; l < 100; l++) {
+                    mk[k + l] = mk[k] + l;
+
+                    if (l >= (current - k)) {
+                        return;
+                    }
+                }
+            }
+        }
+
+        mk[current] = currentVertex.barycenter;
+
+        //If there are vertices on the current Barycenter we can push it to the left
+        for (var l = 1; l < 100; l++) {
+
+            if (currentVertex.barycenter - l >= (mk[current - l])) {
+                return;
+            } else {
+                mk[current - l] = currentVertex.barycenter - l;
+                if (l >= current - 1) {
+                    return;
+                }
+            }
+        }
+    }
+};
+
+function rightOfItsBarycenter(graph,currentVertex, currentLayer, mk) {
+
+    var current = currentVertex.layerX;
+
+    //The leftmost vertex in the layer
+    if (current === graph.vertices.length-1) {
+        mk[current] = currentVertex.barycenter;
+        return;
+    } else {
+
+        //Get vertex closest to the left x-coordinate from currenVertex with equal or lager priority
+        var k = -1
+
+        for (var prioVertex = current; prioVertex < currentLayer.length; prioVertex++) {
+            if (currentLayer[prioVertex].priority >= currentVertex.priority) {
+                k = prioVertex;
+            }
+        }
+
+        //If there is a vertex on the left of currentVertex with higher or equal priority
+        if (k !== -1) {
+            if (mk[k] <= currentVertex.barycenter + k - current) {
+
+                for (var l = 1; l < 100; l++) {
+                    mk[k - l] = mk[k] - l;
+
+                    if (l >= (k - current)) {
+                        return;
+                    }
+                }
+            }
+        }
+
+        mk[current] = currentVertex.barycenter;
+
+        //If there are vertices on the current Barycenter we can push it to the left
+        for (var l = 1; l < 100; l++) {
+
+            if (currentVertex.barycenter + l < (mk[current + l])) {
+                return;
+            } else {
+                mk[current + l] = currentVertex.barycenter + l;
+                if (l >= (graph.vertices.length - 1 - current)){
+                    return;
+                }
+            }
+        }
+    }
 };
 
 function sortingOnPriorityThenPositionWithinLayer(a,b) {
