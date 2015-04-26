@@ -14,15 +14,17 @@
 
     /*//init final test sets
     var initFinalTestVertices = getFinalTestVertices();
-    var initFinalTestEdges = getFinalTestEdges();
+    var initFinalTestEdges = getFinalTestEdges();*/
    
+   
+
+    var graph = constructGraph();
+
     //draw vertices
-    createVertices(initFinalTestVertices);
+    createVertices(graph.vertices);
 
     //draw edges
-    createEdges(initFinalTestEdges);*/
-
-    constructGraph();
+    createEdges(graph.edges);
 
     //Make all components draggable
     jsPlumb.draggable($('.component'));
@@ -50,6 +52,10 @@ function createVertices(vertices) {
              'top' : this.layer*100
          });
 
+         if (this.dummy) {
+            tempVertex.addClass('invisiburu')
+         }
+
         //Update references in jsPlumb
          jsPlumb.setIdChanged(this.label, this.label);
     });
@@ -69,7 +75,7 @@ function createEdges(edges) {
         if (this.reversed)
             connectorStyle = ['StateMachine', { showLoopback: true }];
         else
-            connectorStyle = 'Straight';
+            connectorStyle = 'Flowchart';
 
         var edge = jsPlumb.connect({
             source: this.from,
@@ -201,13 +207,13 @@ function constructGraph() {
     var twoLoopEdges = removeAndStoreTwoLoops(graph);
 
     //Step 1 - Contruct a FAS-set, returns a array of [0] = edges not in FAS, [1] = FAS
-    var Fas = cycleRemoval(graph);
+    var fas = cycleRemoval(graph);
 
     //Step 1.1 - Reverse edges left in FAS
-    reverseEdgesInFas(Fas);
+    reverseEdgesInFas(fas);
 
     //Step 1.2 - Update graph with new structure
-    var newEdges = $.merge(Fas[0], Fas[1]);
+    var newEdges = $.merge(fas[0], fas[1]);
     graph.edges = newEdges;
     graph.adjacencyList = [];
     assigningVertexAndLabelNumber(graph);
@@ -234,7 +240,41 @@ function constructGraph() {
 
     //Step 4 - x-coordinate assignment
     edgeStraightening(graph);
-    var a = 5;
+    
+    //Step 5 - Reverse vertices layering so bottom is top and top is bottom
+    for (var i = 0; i < graph.vertices.length; i++) {
+
+        //Revers of layer
+        var reverseLayer = graph.layering.length - graph.vertices[i].layer;
+        graph.vertices[i].layer = reverseLayer;
+    };
+
+    //Step 5.1 - Remove all dummy vertices
+    for (var i = 0; i < graph.vertices.length; i++) {
+        if (graph.vertices[i].dummy) {
+            graph.vertices.splice(i, 1);
+            i--;
+        }
+    }
+
+    //Step 5.2 - Remove all dummy edges
+    for (var i = 0; i < graph.edges.length; i++) {
+        if (graph.edges[i].dummy) {
+            graph.edges.splice(i, 1);
+            i--;
+        }
+    }
+
+    //Step 5.3 - Reverse fas edges back to original direction
+    var reversedFas = reverseEdgesInFas(fas);
+    $.merge(graph.edges, fas[1]);
+
+    //Step 5.4 - Add all two loop edges and self loop edges back to the edge set
+    $.merge(graph.edges, twoLoopEdges);
+    $.merge(graph.edges, selfLoopEdges);
+    $.merge(graph.edges, dummyVerticesAndEdges[2]);
+
+    return graph;
 
     
 };
@@ -270,7 +310,8 @@ function removeAndStoreSelfLoops(graph) {
 
     for (index = 0; index < graph.edges.length; index++) {
         if (graph.edges[index].from === graph.edges[index].to) {
-            deepCopyElement = $.extend(true, [], graph.edges[index]);
+            deepCopyElement = $.extend(true, {}, graph.edges[index]);
+            deepCopyElement['reversed'] = true;
             selfLoopEdges.push(deepCopyElement)
             graph.edges.splice(index, 1);
             index--;
@@ -702,7 +743,7 @@ function checkMostEdgesInPreviousLayer(graph,previousLayer) {
 
 /****************************** Proper layering *****************************************************/
 function makeProperLayering(graph) {
-    var dummyVertices = [], dummyEdges = [];
+    var dummyVertices = [], dummyEdges = [], oldEdges = [];
     for (var index = 0; index < graph.edges.length;index++){
         var to, from;
         var currentEdge = graph.edges[index];
@@ -742,12 +783,13 @@ function makeProperLayering(graph) {
                 }
                 dummyEdges.push(tmpEdge);
             };
-
+            var originalEdge = jQuery.extend(true, {}, graph.edges[index]);
+            oldEdges.push(originalEdge);
             graph.edges.splice(index, 1);
             index--;
         }
     };
-    return [dummyVertices, dummyEdges];
+    return [dummyVertices, dummyEdges,oldEdges];
 };
 
 function createDummyVertex(graph,fromParent) {
@@ -884,21 +926,20 @@ function sortingOnBarycenter(a,b){
 /****************************** End of edge crossing minimization ***********************************/
 
 /****************************** Edge Straightening *************************************************/
-function edgeStraightening() {
-
-
+function edgeStraightening(graph) {
     //Set x-coordinate of all vertices in the graph
     setWithinLayerXCoordinate(graph);
 
     //Until convergence to some value
     sweepXCoordinateDownUp(graph);
-    sweepXcoordinateUpDown(graph);
+    sweepXCoordinateUpDown(graph);
     sweepXCoordinateDownUp(graph);
+    sweepXCoordinateUpDown(graph);
 
 };
 
 function setWithinLayerXCoordinate(graph) {
-    for (var layer = 0; layer = graph.layering.length; layer++){
+    for (var layer = 0; layer < graph.layering.length; layer++){
         for(var positionInLayer = 0; positionInLayer < graph.layering[layer].length; positionInLayer++){
 
             //Set x-coordinate within layer
@@ -931,13 +972,13 @@ function sweepXCoordinateDownUp(graph) {
         setPriority(graph, currentLayer, 'downToUp');
 
         //Set the Barycenters of the current layer
-        xCoordinateBarycenter(graph, currentLayer, incidentMatrix);
+        xCoordinateBarycenter(graph, currentLayer, incidentMatrix, graph.layering[currentLayer - 1]);
 
         //Copy the current layer into a new set for temporary removal
-        var tmpCurrentLayer = jQuery.extend(true, {}, graph.layering[currentLayer]);
+        var tmpCurrentLayer = jQuery.extend(true, [], graph.layering[currentLayer]);
 
         //Assign x-coordinates to vertices in current layer
-        setXcoordinate(graph, tmpCurrentLayer,currentLayer);
+        setXCoordinate(graph, tmpCurrentLayer,graph.layering[currentLayer]);
 
         //Remove Barycenter value from current layer
         removeBarycenter(graph, currentLayer);
@@ -954,52 +995,58 @@ function sweepXCoordinateUpDown(graph) {
         setPriority(graph, currentLayer, 'upToDown');
 
         //Set the Barycenters of the current layer
-        xCoordinateBarycenter(graph, currentLayer, incidentMatrix);
+        xCoordinateBarycenter(graph, currentLayer, incidentMatrix, graph.layering[currentLayer + 1]);
 
         //Copy the current layer into a new set for temporary removal
-        var tmpCurrentLayer = jQuery.extend(true, {}, graph.layering[currentLayer]);
+        var tmpCurrentLayer = jQuery.extend(true, [], graph.layering[currentLayer]);
 
         //Assign x-coordinates to vertices in current layer
-        setXcoordinate(graph, tmpCurrentLayer, currentLayer);
+        setXCoordinate(graph, tmpCurrentLayer, graph.layering[currentLayer]);
 
         //Remove Barycenter value from current layer
         removeBarycenter(graph, currentLayer);
     };
 };
 
-function xCoordinateBarycenter(graph, currentLayer, incidentMatrix) {
+function xCoordinateBarycenter(graph, currentLayer, incidentMatrix,fixedLayer) {
 
     for (var row = 0; row < incidentMatrix.length; row++) {
         var colValue = 0, numberOfEdges = 0;
         for (var col = 0; col < incidentMatrix[row].length; col++) {
             if (incidentMatrix[row][col] === 1) {
-                colValue += (col + 1);
+                colValue +=  fixedLayer[col].xCoordinate;
                 numberOfEdges++;
             }
         }
 
         //Prevent NaN
-        if (colValue === 0) colValue = -1000;
-
-        graph.layering[currentLayer][row]['barycenter'] = Math.round(colValue / numberOfEdges);
+        if (colValue === 0)
+            graph.layering[currentLayer][row]['barycenter'] = graph.layering[currentLayer][row].xCoordinate;
+        else
+            graph.layering[currentLayer][row]['barycenter'] = Math.round(colValue / numberOfEdges);
     }
 };
 
 
 
 function setXCoordinate(graph,tmpCurrentLayer,currentLayer){
+
+    var mk = [];
+
+    for (var initialXCoordinate = 0; initialXCoordinate < tmpCurrentLayer.length; initialXCoordinate++) {
+        mk.push(tmpCurrentLayer[initialXCoordinate].xCoordinate);
+    }
+
     for (var current = 0; current < tmpCurrentLayer.length; current++) {
 
-        var mk = [],
-            currentHigh = 0,
-            currentVertex = undefined;
-
+        var currentHigh = -1,
+        currentVertex = undefined;
+        
         for (var initialXCoordinate = 0; initialXCoordinate < tmpCurrentLayer.length; initialXCoordinate++) {
-            mk.push(tmpCurrentLayer[initialXCoordinate].xCoordinate);
-            if (tmpCurrentLayer[initialXCoordinate].priority > currentHigh) {
+            if (!tmpCurrentLayer[initialXCoordinate].used && tmpCurrentLayer[initialXCoordinate].priority > currentHigh) {
                 currentHigh = tmpCurrentLayer[initialXCoordinate].priority;
                 currentVertex = tmpCurrentLayer[initialXCoordinate];
-            }
+            }   
         }
 
         //Is the vertex placed on the right side of its Barycenter
@@ -1007,14 +1054,13 @@ function setXCoordinate(graph,tmpCurrentLayer,currentLayer){
             leftOfItsBarycenter(currentVertex,tmpCurrentLayer,mk);
         }
             //On the left side of its Barycenter
-        else if ((currentVertex.barycenter - mk) > 0) {
+        else if ((currentVertex.barycenter - mk[currentVertex.layerX]) > 0) {
             rightOfItsBarycenter(graph,currentVertex,tmpCurrentLayer,mk);
         }
         
         //Store the x-coordinate of the current vertex and remove it from the temporary list
         currentLayer[currentVertex.layerX].xCoordinate = mk[currentVertex.layerX];
-        tmpCurrentLayer.splice(currentVertex.layerX,1);
-
+        currentVertex['used'] = true;
     }
 };
 
@@ -1031,8 +1077,8 @@ function leftOfItsBarycenter(currentVertex,currentLayer,mk) {
         //Get vertex closest to the left x-coordinate from currenVertex with equal or lager priority
         var k = -1
 
-        for (var prioVertex = 0; prioVertex < current; prioVertex++) {
-            if (currentLayer[prioVertex].priority >= currentVertex.priority) {
+        for (var prioVertex = 0; prioVertex < currentLayer.length; prioVertex++) {
+            if (currentLayer[prioVertex].priority >= currentVertex.priority && currentLayer[prioVertex].label !== currentVertex.label) {
                 k = prioVertex;
             }
         }
@@ -1056,7 +1102,7 @@ function leftOfItsBarycenter(currentVertex,currentLayer,mk) {
         //If there are vertices on the current Barycenter we can push it to the left
         for (var l = 1; l < 100; l++) {
 
-            if (currentVertex.barycenter - l >= (mk[current - l])) {
+            if (mk[current + l] === undefined || currentVertex.barycenter - l >= (mk[current - l])) {
                 return;
             } else {
                 mk[current - l] = currentVertex.barycenter - l;
@@ -1082,7 +1128,7 @@ function rightOfItsBarycenter(graph,currentVertex, currentLayer, mk) {
         var k = -1
 
         for (var prioVertex = current; prioVertex < currentLayer.length; prioVertex++) {
-            if (currentLayer[prioVertex].priority >= currentVertex.priority) {
+            if (currentLayer[prioVertex].priority >= currentVertex.priority && currentLayer[prioVertex].label !== currentVertex.label) {
                 k = prioVertex;
             }
         }
@@ -1106,7 +1152,7 @@ function rightOfItsBarycenter(graph,currentVertex, currentLayer, mk) {
         //If there are vertices on the current Barycenter we can push it to the left
         for (var l = 1; l < 100; l++) {
 
-            if (currentVertex.barycenter + l < (mk[current + l])) {
+            if (mk[current + l] === undefined || currentVertex.barycenter + l < (mk[current + l])) {
                 return;
             } else {
                 mk[current + l] = currentVertex.barycenter + l;

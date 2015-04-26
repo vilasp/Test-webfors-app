@@ -672,6 +672,12 @@ a:active {
     filter:alpha(opacity=90);
 }
 
+.invisiburu{
+    visibility: hidden;
+    height:1px;
+    width:1px;
+    display:inline-block;
+}
 
 .demo-links, .library-links {
   position: fixed;
