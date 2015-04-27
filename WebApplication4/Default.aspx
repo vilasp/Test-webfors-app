@@ -4,7 +4,7 @@
     
     <script type="text/javascript" src="Scripts/jsPlumb-master/dist/js/jquery.jsPlumb-1.7.5.js"></script>
     <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
-    <script type="text/javascript" src="Scripts/init_components.js"></script>
+    <script type="text/javascript" src="Scripts/clustic.js"></script>
     <section class="featured">
         <div class="content-wrapper">
             <hgroup class="title">
