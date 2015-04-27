@@ -75,7 +75,7 @@ function createEdges(edges) {
         if (this.reversed)
             connectorStyle = ['StateMachine', { showLoopback: true }];
         else
-            connectorStyle = 'Flowchart';
+            connectorStyle = 'Straight';
 
         var edge = jsPlumb.connect({
             source: this.from,
@@ -269,9 +269,10 @@ function constructGraph() {
     var reversedFas = reverseEdgesInFas(fas);
     $.merge(graph.edges, fas[1]);
 
-    //Step 5.4 - Add all two loop edges and self loop edges back to the edge set
+    //Step 5.4 - Add all two loop/ self loop edges and all edges replacing dummy edges back to the edge set
     $.merge(graph.edges, twoLoopEdges);
     $.merge(graph.edges, selfLoopEdges);
+    removeDuplicateEdges(graph, dummyVerticesAndEdges[2])
     $.merge(graph.edges, dummyVerticesAndEdges[2]);
 
     return graph;
@@ -280,6 +281,17 @@ function constructGraph() {
 };
 /************************ Graph construction end **************************************/
 
+//Remove all already existing edges from the set of original set
+function removeDuplicateEdges(graph,oldEdges) {
+    for (var i = 0; i < oldEdges.length; i++){
+        $.each(graph.edges, function () {
+            if (oldEdges[i].label === this.label) {
+                oldEdges.splice(i, 1),
+                i--;
+            }
+        });
+    }
+};
 
 //Assign vertex numbers and init adjacency lists
 function assigningVertexAndLabelNumber(graph) {
