@@ -48,8 +48,8 @@ function createVertices(vertices) {
 
         //Set appropriate coordinates of vertex
         tempVertex.css({
-            'left': this.xCoordinate * 100,
-            'top': this.layer * 100
+            'left': (this.xCoordinate) * 100,
+            'top': (this.layer) * 100
         });
 
         if (this.dummy) {
@@ -65,7 +65,8 @@ function createVertices(vertices) {
 function createEdges(edges) {
 
     //Declare all possible positions of endpoints
-    var dynamicAnchors = ["Top", "TopRight", "TopLeft", "Right", "Left", "BottomLeft", "Bottom", "BottomRight"];
+    //var dynamicAnchors = ["Top", "TopRight", "TopLeft", "Right", "Left", "BottomLeft", "Bottom", "BottomRight"];
+    var dynamicAnchors = ["Top", "Right", "Left", "Bottom"];
 
     //For each edge, create a connection between TO and FROM with an arrow pointing in the direction of the flow
     $.each(edges, function () {
@@ -176,11 +177,11 @@ function getTestVertices() {
     var node2 = { "label": "node2" }
     var node3 = { "label": "node3" }
     var node4 = { "label": "node4" }
-    var node5 = { "label": "node5" }
+    var node5 = { "label": "node5" ,staticToVertex: {to : 'node12', xAxis : 'right'} }
     var node6 = { "label": "node6" }
     var node7 = { "label": "node7" }
     var node8 = { "label": "node8" }
-    var node9 = { "label": "node9", staticToVertex: {to : 'node6', yAxis : 'below', xAxis : 'left'} }
+    var node9 = { "label": "node9", staticToVertex: {to : 'node6', yAxis : 'below'} }
     var node10 = { "label": "node10" }
     var node11 = { "label": "node11" }
 
@@ -219,8 +220,8 @@ function constructGraph() {
     assigningVertexAndLabelNumber(graph);
     setNeighbors(graph);
 
-    //Step 2 - Remove one of the static vertices under constraints
-    var verticesUnderConstraints = removeAndStoreVerticesUnderConstraints(graph);
+    //Step 2 - Remove  vertices under static constraints on y position
+    var verticesUnderConstraints = removeAndStoreVerticesUnderConstraints(graph, 'y');
 
     //Step 2.1 - Make a layering of the graph
     var layeredVertices = clusticLongestPath(graph);
@@ -228,26 +229,30 @@ function constructGraph() {
     graph['layering'] = layeredVertices[1];
 
     //Step 2.2 - Reintroduce vertices under static constraints
-    reIntroduceStaticConstraintsVertices(graph, verticesUnderConstraints);
+    reIntroduceStaticConstraintsVertices(graph, verticesUnderConstraints,'y');
 
-    //Step 2.3 - Assign the removed node 
-
-    //Step 2.1 - Make proper layering
+    //Step 2.3 - Make proper layering
     var dummyVerticesAndEdges = makeProperLayering(graph);
     addDummyVerticesToGraphAndLayering(graph, dummyVerticesAndEdges[0]);
     addDummyEdgesToGraph(graph, dummyVerticesAndEdges[1]);
 
-    //Step 2.2 - Remove leftover edges in the graph
+    //Step 2.4 - Remove leftover edges in the graph
     removeAllNeighbors(graph);
 
-    //Step 2.3 - Add all the edges, original + dummies
+    //Step 2.5 - Add all the edges, original + dummies
     setNeighbors(graph);
 
-    //Step 3 - Edge crossing minimization
-    edgeCrossingMinimization(graph);
+    //Step 3 - Remove all vertices with constraints on x position
+    var verticesUnderConstraints = removeAndStoreVerticesUnderConstraints(graph, 'x');
+
+    //Step 3.1 - Edge crossing minimization
+    clusticEdgeCrossingMinimization(graph);
+
+    //Step 3.2 - Reintroduce removed vertices back into the vertices set
+    reIntroduceStaticConstraintsVertices(graph, verticesUnderConstraints,'x');
 
     //Step 4 - x-coordinate assignment
-    edgeStraightening(graph);
+    clusticEdgeStraightening(graph);
 
     //Step 5 - Reverse vertices layering so bottom is top and top is bottom
     for (var i = 0; i < graph.vertices.length; i++) {
@@ -762,26 +767,48 @@ function checkMostEdgesInPreviousLayer(graph, previousLayer) {
 }
 
 //Removes one of the two vertices under constraints with each other
-function removeAndStoreVerticesUnderConstraints(graph){
+function removeAndStoreVerticesUnderConstraints(graph, type){
     var verticesUnderConstraints = [];
 
-    for(var i = 0; i < graph.vertices.length; i++){
-        if(graph.vertices[i].staticToVertex !== undefined){
-            var tmpVertex = {}
-            tmpVertex['vertex'] = jQuery.extend(true, {}, graph.vertices[i]);
-            tmpVertex['neighborsIn'] = graph.adjacencyList[tmpVertex.vertex.number].neighborsIn;
-            tmpVertex['neighborsOut'] = graph.adjacencyList[tmpVertex.vertex.number].neighborsOut;
-            verticesUnderConstraints.push(tmpVertex);
-            removeVertex("largestDegree", graph, graph.vertices[i]);
+    for (var i = 0; i < graph.vertices.length; i++) {
+        var currentVertex = graph.vertices[i];
+        if(currentVertex.staticToVertex !== undefined){
+            var tmpVertex = {};
+
+            if (type === 'x' && currentVertex.staticToVertex.xAxis !== undefined) {
+                tmpVertex['vertex'] = jQuery.extend(true, {}, currentVertex);
+                for (var j = 0; j < graph.layering[currentVertex.layer].length; j++) {
+                    if (graph.layering[currentVertex.layer][j].label === currentVertex.label)
+                        graph.layering[currentVertex.layer].splice(j, 1);
+                };
+            }
+
+            else if (type === 'y' && currentVertex.staticToVertex.yAxis !== undefined) {
+                tmpVertex['vertex'] = jQuery.extend(true, {}, currentVertex);
+            }
+
+            if (!$.isEmptyObject(tmpVertex)) {
+                tmpVertex['neighborsIn'] = graph.adjacencyList[tmpVertex.vertex.number].neighborsIn;
+                tmpVertex['neighborsOut'] = graph.adjacencyList[tmpVertex.vertex.number].neighborsOut;
+                verticesUnderConstraints.push(tmpVertex);
+                removeVertex("largestDegree", graph, currentVertex);
+            } 
         }   
     };
     return verticesUnderConstraints;
 }
 
 //Re introduces the removed vertices back into the set
-function reIntroduceStaticConstraintsVertices(graph, verticesUnderConstraint) {
+function reIntroduceStaticConstraintsVertices(graph, verticesUnderConstraint,type) {
     $.each(verticesUnderConstraint, function () {
-        placeVertexInLayer(graph,this);
+
+        if (type === 'y') {
+            placeVertexInLayer(graph, this);
+        }
+        else if (type === 'x') {
+            placeVertexInOrderInLayer(graph,this)
+        }
+
         graph.vertices.push(this.vertex);
         graph.adjacencyList[this.vertex.number].neighborsIn = this.neighborsIn;
         graph.adjacencyList[this.vertex.number].neighborsOut = this.neighborsOut;
@@ -798,6 +825,24 @@ function placeVertexInLayer(graph,currentVertex) {
                 currentVertex.vertex['layer'] = this.layer + 1;
             }
             graph.layering[currentVertex.vertex.layer].push(currentVertex.vertex);
+        }
+    });
+};
+
+function placeVertexInOrderInLayer(graph,currentVertex) {
+    $.each(graph.vertices, function () {
+        if (this.label === currentVertex.vertex.staticToVertex.to) {
+            var fromIndex, toIndex;
+
+            if (currentVertex.vertex.staticToVertex.xAxis === 'left') {
+                currentVertex.vertex['layerX'] = this.layerX;
+                fromIndex = this.layerX;
+            }
+            else if (currentVertex.vertex.staticToVertex.xAxis === 'right') {
+                currentVertex.vertex['layerX'] = this.layerX + 1;
+                fromIndex = this.layerX + 1;
+            }
+            graph.layering[currentVertex.vertex.layer].splice(fromIndex,0,currentVertex.vertex)
         }
     });
 };
@@ -885,7 +930,8 @@ function updateAdjacencyList(graph, from, to) {
 /****************************** End of proper layering **********************************************/
 
 /****************************** Edge crossing minimization ******************************************/
-function edgeCrossingMinimization(graph) {
+function clusticEdgeCrossingMinimization(graph) {
+    setWithinLayerXCoordinate(graph);
 
     //Until convergence to some value
     var convergenceValue = 100;
@@ -988,7 +1034,7 @@ function sortingOnBarycenter(a, b) {
 /****************************** End of edge crossing minimization ***********************************/
 
 /****************************** Edge Straightening *************************************************/
-function edgeStraightening(graph) {
+function clusticEdgeStraightening(graph) {
     //Set x-coordinate of all vertices in the graph
     setWithinLayerXCoordinate(graph);
 
@@ -1082,13 +1128,18 @@ function xCoordinateBarycenter(graph, currentLayer, incidentMatrix, fixedLayer) 
         }
 
         //Prevent NaN
-        if (colValue === 0)
+        if (colValue === 0 && numberOfEdges === 0)
             graph.layering[currentLayer][row]['barycenter'] = graph.layering[currentLayer][row].xCoordinate;
+        else if ((colValue / numberOfEdges) % 1 !== 0)
+            var checkDummies = checkDummyNeighbors(graph, graph.layering[currentLayer][row]);
         else
             graph.layering[currentLayer][row]['barycenter'] = Math.round(colValue / numberOfEdges);
     }
 };
 
+function checkDummyNeighbors(graph, currentVertex) {
+
+};
 
 
 function setXCoordinate(graph, tmpCurrentLayer, currentLayer) {
@@ -1139,7 +1190,7 @@ function leftOfItsBarycenter(currentVertex, currentLayer, mk) {
         //Get vertex closest to the left x-coordinate from currenVertex with equal or lager priority
         var k = -1
 
-        for (var prioVertex = 0; prioVertex < currentLayer.length; prioVertex++) {
+        for (var prioVertex = 0; prioVertex < current; prioVertex++) {
             if (currentLayer[prioVertex].priority >= currentVertex.priority && currentLayer[prioVertex].label !== currentVertex.label) {
                 k = prioVertex;
             }
@@ -1164,11 +1215,11 @@ function leftOfItsBarycenter(currentVertex, currentLayer, mk) {
         //If there are vertices on the current Barycenter we can push it to the left
         for (var l = 1; l < 100; l++) {
 
-            if (mk[current + l] === undefined || currentVertex.barycenter - l >= (mk[current - l])) {
+            if (mk[current - l] === undefined || currentVertex.barycenter - l >= (mk[current - l])) {
                 return;
             } else {
                 mk[current - l] = currentVertex.barycenter - l;
-                if (l >= current - 1) {
+                if (l > current - 1) {
                     return;
                 }
             }
