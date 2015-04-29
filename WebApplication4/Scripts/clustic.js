@@ -48,7 +48,7 @@ function createVertices(vertices) {
 
         //Set appropriate coordinates of vertex
         tempVertex.css({
-            'left': (this.xCoordinate) * 100,
+            'left': (this.xCoordinate+4) * 100,
             'top': (this.layer) * 100
         });
 
@@ -177,11 +177,11 @@ function getTestVertices() {
     var node2 = { "label": "node2" }
     var node3 = { "label": "node3" }
     var node4 = { "label": "node4" }
-    var node5 = { "label": "node5" ,staticToVertex: {to : 'node12', xAxis : 'right'} }
+    var node5 = { "label": "node5"}
     var node6 = { "label": "node6" }
     var node7 = { "label": "node7" }
     var node8 = { "label": "node8" }
-    var node9 = { "label": "node9", staticToVertex: {to : 'node6', yAxis : 'below'} }
+    var node9 = { "label": "node9"}
     var node10 = { "label": "node10" }
     var node11 = { "label": "node11" }
 
@@ -819,7 +819,12 @@ function placeVertexInLayer(graph,currentVertex) {
     $.each(graph.vertices, function () {
         if (this.label === currentVertex.vertex.staticToVertex.to) {
             if (currentVertex.vertex.staticToVertex.yAxis === 'below') {
-                currentVertex.vertex['layer'] = this.layer - 1;
+                if (this.layer === 0) {
+                    currentVertex.vertex['layer'] = 0;
+                    graph.layering.splice(0, 0,[]);
+                } else {
+                    currentVertex.vertex['layer'] = this.layer - 1;
+                }
             }
             else if (currentVertex.vertex.staticToVertex.yAxis === 'above') {
                 currentVertex.vertex['layer'] = this.layer + 1;
@@ -832,19 +837,28 @@ function placeVertexInLayer(graph,currentVertex) {
 function placeVertexInOrderInLayer(graph,currentVertex) {
     $.each(graph.vertices, function () {
         if (this.label === currentVertex.vertex.staticToVertex.to) {
-            var fromIndex, toIndex;
+            var fromIndex,
+                toIndex,
+                positionWithinLayer = getPositionWithinLayer(graph,this);
 
             if (currentVertex.vertex.staticToVertex.xAxis === 'left') {
-                currentVertex.vertex['layerX'] = this.layerX;
-                fromIndex = this.layerX;
+                currentVertex.vertex['layerX'] = positionWithinLayer;
+                fromIndex = positionWithinLayer;
             }
             else if (currentVertex.vertex.staticToVertex.xAxis === 'right') {
-                currentVertex.vertex['layerX'] = this.layerX + 1;
-                fromIndex = this.layerX + 1;
+                currentVertex.vertex['layerX'] = positionWithinLayer + 1;
+                fromIndex = positionWithinLayer + 1;
             }
             graph.layering[currentVertex.vertex.layer].splice(fromIndex,0,currentVertex.vertex)
         }
     });
+};
+
+function getPositionWithinLayer(graph, searchVertex) {
+    for (var i = 0; i < graph.layering[searchVertex.layer].length; i++) {
+        if(graph.layering[searchVertex.layer][i].label == searchVertex.label)
+            return i
+    }
 };
 /****************************** End of longest path   ************************************************/
 
@@ -903,7 +917,16 @@ function createDummyVertex(graph, fromParent) {
     var newDummyVertex = {};
     newDummyVertex['label'] = 'node' + getHighestVerticeNumber(graph);
     newDummyVertex['number'] = getHighestVerticeNumber(graph);
-    newDummyVertex['layer'] = fromParent.layer - 1;
+    if (fromParent.layer === 0) {
+        newDummyVertex['layer'] = 0;
+        graph.layering.splice(0, 0, []);
+        $.each(graph.vertices, function () {
+            this.layer++;
+        });
+    } else {
+        newDummyVertex['layer'] = fromParent.layer - 1;
+    }
+    
     newDummyVertex['dummy'] = true;
     graph.vertices.push(newDummyVertex);
     graph.layering[newDummyVertex.layer].push(newDummyVertex);
@@ -1080,7 +1103,7 @@ function sweepXCoordinateDownUp(graph) {
         setPriority(graph, currentLayer, 'downToUp');
 
         //Set the Barycenters of the current layer
-        xCoordinateBarycenter(graph, currentLayer, incidentMatrix, graph.layering[currentLayer - 1]);
+        xCoordinateBarycenter(graph, currentLayer, incidentMatrix, graph.layering[currentLayer - 1], 'downToUp');
 
         //Copy the current layer into a new set for temporary removal
         var tmpCurrentLayer = jQuery.extend(true, [], graph.layering[currentLayer]);
@@ -1103,7 +1126,7 @@ function sweepXCoordinateUpDown(graph) {
         setPriority(graph, currentLayer, 'upToDown');
 
         //Set the Barycenters of the current layer
-        xCoordinateBarycenter(graph, currentLayer, incidentMatrix, graph.layering[currentLayer + 1]);
+        xCoordinateBarycenter(graph, currentLayer, incidentMatrix, graph.layering[currentLayer + 1],'upToDown');
 
         //Copy the current layer into a new set for temporary removal
         var tmpCurrentLayer = jQuery.extend(true, [], graph.layering[currentLayer]);
@@ -1116,7 +1139,7 @@ function sweepXCoordinateUpDown(graph) {
     };
 };
 
-function xCoordinateBarycenter(graph, currentLayer, incidentMatrix, fixedLayer) {
+function xCoordinateBarycenter(graph, currentLayer, incidentMatrix, fixedLayer, type) {
 
     for (var row = 0; row < incidentMatrix.length; row++) {
         var colValue = 0, numberOfEdges = 0;
@@ -1130,15 +1153,40 @@ function xCoordinateBarycenter(graph, currentLayer, incidentMatrix, fixedLayer) 
         //Prevent NaN
         if (colValue === 0 && numberOfEdges === 0)
             graph.layering[currentLayer][row]['barycenter'] = graph.layering[currentLayer][row].xCoordinate;
-        else if ((colValue / numberOfEdges) % 1 !== 0)
-            var checkDummies = checkDummyNeighbors(graph, graph.layering[currentLayer][row]);
+        else if ((colValue / numberOfEdges) % 1 !== 0 && checkDummyNeighbors(graph, graph.layering[currentLayer][row], type,(colValue / numberOfEdges)))
+            graph.layering[currentLayer][row]['barycenter'] = Math.floor(colValue / numberOfEdges);
         else
             graph.layering[currentLayer][row]['barycenter'] = Math.round(colValue / numberOfEdges);
     }
 };
 
-function checkDummyNeighbors(graph, currentVertex) {
+function checkDummyNeighbors(graph, currentVertex,type,barycenter) {
+    var neighborList;
 
+    if(type === 'downToUp')
+        neighborList = graph.adjacencyList[currentVertex.number].neighborsOut;
+    else
+        neighborList = graph.adjacencyList[currentVertex.number].neighborsIn;
+    
+    
+    var closestDummy = 100000,
+        closestLeftDummy = 10000;
+
+    $.each(neighborList, function () {
+        for (var i = 0; i < graph.vertices.length; i++) {
+            if (this[0] === graph.vertices[i].label && graph.vertices[i].dummy && Math.abs(graph.vertices[i].layerX - barycenter) < closestDummy) {
+                if (graph.vertices[i].xCoordinate < barycenter)
+                    closestLeftDummy = i;
+                closestDummy = Math.abs(graph.vertices[i].layerX - barycenter);
+            }
+
+        };
+    });
+
+    if (closestLeftDummy !== 10000)
+        return true;
+    else
+        return false;
 };
 
 
@@ -1188,11 +1236,14 @@ function leftOfItsBarycenter(currentVertex, currentLayer, mk) {
     } else {
 
         //Get vertex closest to the left x-coordinate from currenVertex with equal or lager priority
-        var k = -1
+        var k = -1,
+            closestIndex = 10000;
 
         for (var prioVertex = 0; prioVertex < current; prioVertex++) {
-            if (currentLayer[prioVertex].priority >= currentVertex.priority && currentLayer[prioVertex].label !== currentVertex.label) {
+            if (currentLayer[prioVertex].priority >= currentVertex.priority && currentLayer[prioVertex].label !== currentVertex.label
+                && Math.abs(currentVertex.barycenter - prioVertex) < closestIndex) {
                 k = prioVertex;
+                closestIndex = Math.abs(currentVertex.barycenter - prioVertex);
             }
         }
 
@@ -1237,16 +1288,20 @@ function rightOfItsBarycenter(graph, currentVertex, currentLayer, mk) {
         return;
     } else {
 
-        //Get vertex closest to the left x-coordinate from currenVertex with equal or lager priority
-        var k = -1
+        //Get vertex closest to the right x-coordinate from currenVertex with equal or lager priority
+        var k = -1,
+            closestIndex = 10000;
+
 
         for (var prioVertex = current; prioVertex < currentLayer.length; prioVertex++) {
-            if (currentLayer[prioVertex].priority >= currentVertex.priority && currentLayer[prioVertex].label !== currentVertex.label) {
+            if (currentLayer[prioVertex].priority >= currentVertex.priority && currentLayer[prioVertex].label !== currentVertex.label
+                && Math.abs(currentVertex.barycenter - prioVertex) < closestIndex) {
                 k = prioVertex;
+                closestIndex = Math.abs(currentVertex.barycenter - prioVertex);
             }
         }
 
-        //If there is a vertex on the left of currentVertex with higher or equal priority
+        //If there is a vertex on the right of currentVertex with higher or equal priority
         if (k !== -1) {
             if (mk[k] <= currentVertex.barycenter + k - current) {
 
