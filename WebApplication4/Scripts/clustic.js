@@ -17,6 +17,8 @@
     var initFinalTestEdges = getFinalTestEdges();*/
 
 
+    //Start by extracting subgraphs and create their positioning within the subgraph
+    var sub
 
     var graph = constructGraph();
 
@@ -91,6 +93,22 @@ function createEdges(edges) {
             connector: connectorStyle
         });
     });
+};
+
+function extractAndCreateSubGraphs() {
+    var vertices = getTestVertices(),
+        edges = getTestEdges(),
+        subgraphs = {};
+
+    $.each(vertices, function () {
+        
+    });
+
+    
+
+
+
+
 };
 
 //Create and return final test set of vertices
@@ -177,11 +195,11 @@ function getTestVertices() {
     var node2 = { "label": "node2" }
     var node3 = { "label": "node3" }
     var node4 = { "label": "node4" }
-    var node5 = { "label": "node5"}
+    var node5 = { "label": "node5" }
     var node6 = { "label": "node6" }
     var node7 = { "label": "node7" }
     var node8 = { "label": "node8" }
-    var node9 = { "label": "node9"}
+    var node9 = { "label": "node9" }
     var node10 = { "label": "node10" }
     var node11 = { "label": "node11" }
 
