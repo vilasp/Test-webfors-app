@@ -20,13 +20,19 @@
     //Start by extracting subgraphs and create their positioning within the subgraph
     var subgraphs = extractAndCreateSubGraphs();
 
-    var subLayouts = [];
+    //Add all of the subgraphs to a array of layered subgraphs
+    var subLayouts = [],
+        subgraphKeys = Object.keys(subgraphs);
 
-    for (var i = 0; i < subgraphs.length - 1; i++) {
-        subLayouts[i] = constructGraph(subgraphs[i].vertices, subgraphs[i].edges);
+    for (var i = 1; i < subgraphKeys.length; i++) {
+        subLayouts[i] = constructGraph(subgraphs[subgraphKeys[i]].vertices, subgraphs[subgraphKeys[i]].edges, subgraphs[subgraphKeys[i]].numberOfOriginalVertices);
     }
     
-    var graph = constructGraph(getTestVertices(),getTestEdges());
+    //Change and store all the values of each subgraph so that the normal layering algorithm can be used
+    changeAndStoreSubgraphValues(subLayouts, subgraphKeys);
+
+
+    var graph = constructGraph(getTestVertices(),getTestEdges(),12);
 
     //draw vertices
     createVertices(graph.vertices);
@@ -104,15 +110,15 @@ function createEdges(edges) {
 function extractAndCreateSubGraphs() {
     var vertices = getTestClusterVertices(),
         edges = getTestEdges(),
-        subgraphs = { original : { vertices: [], edges: [] }};
+        numberOfOriginalVertices = vertices.length;
+        subgraphs = { remaining : { vertices: [], edges: [] }};
 
-    //Add all vertices to the subgraph
     $.each(vertices, function () {
 
         if (this.cluster !== undefined) {
 
             if (subgraphs[this.cluster] === undefined) {
-                subgraphs[this.cluster] = { vertices: [this], edges: [] };
+                subgraphs[this.cluster] = { vertices: [this], edges: [], numberOfOriginalVertices : numberOfOriginalVertices };
             }
 
             else if (subgraphs[this.cluster] !== undefined) {
@@ -122,10 +128,11 @@ function extractAndCreateSubGraphs() {
         }
         
         else {
-            subgraphs.original.vertices.push(this);
+            subgraphs.remaining.vertices.push(this);
         }
-
     });
+
+
 
     $.each(edges, function () {
         var currentEdge = this,
@@ -141,7 +148,7 @@ function extractAndCreateSubGraphs() {
         });
 
         if (!isEdgePartOfCluster)
-            subgraphs.original.edges.push(this);
+            subgraphs.remaining.edges.push(this);
 
     });
 
@@ -164,7 +171,32 @@ function checkIfEdgeIsInCluster(cluster, edge) {
         return true;
     else
         return false;
-}
+};
+
+function changeAndStoreSubgraphValues(subgraphs,subgraphKeys) {
+
+    
+    for (var i = 1; i < subgraphKeys.length; i++) {
+
+        //Change and store vertices and their values
+        for(var j = 0; j < subgraphs[i].vertices.length; j++){
+
+            subgraphs[i].vertices[j]['clusterLayer'] = subgraphs[i].vertices[j].layer,
+            subgraphs[i].vertices[j]['clusterLayerX'] = subgraphs[i].vertices[j].layerX,
+            subgraphs[i].vertices[j]['clusterxCoordinate'] = subgraphs[i].vertices[j].xCoordinate;
+
+        }
+
+        //Add a value to an edge indicating that this edge is part of a cluster and should be ignored in the layering
+        for (var j = 0; j < subgraphs[i].edges.length; j++) {
+
+            subgraphs[i].edges[j]['partOfCluster'] = true;
+
+        }
+
+    }
+
+};
 
 //Create and return final test set of vertices
 function getFinalTestVertices() {
@@ -280,8 +312,8 @@ function getTestClusterVertices() {
 };
 
 /************************ Graph construction start ***********************************/
-function constructGraph(vertices,edges) {
-    var graph = { vertices: [], edges: [], adjacencyList: [] };
+function constructGraph(vertices,edges,numberOfOriginalVertices) {
+    var graph = { vertices: [], edges: [], adjacencyList: [], numberOfOriginalVertices : numberOfOriginalVertices };
 
     graph.edges = edges;
     graph.vertices = vertices;
@@ -758,7 +790,7 @@ function reverseEdgesInFas(fas) {
 }
 
 function getHighestVerticeNumber(graph) {
-    return graph.vertices.length;
+    return (graph.vertices.length > graph.numberOfOriginalVertices) ? graph.vertices.length : graph.numberOfOriginalVertices;
 };
 
 function getHighestEdgeLabel(graph) {
@@ -1021,7 +1053,7 @@ function createDummyVertex(graph, fromParent) {
     newDummyVertex['dummy'] = true;
     graph.vertices.push(newDummyVertex);
     graph.layering[newDummyVertex.layer].push(newDummyVertex);
-    graph.adjacencyList.push({ neighborsIn: [], neighborsOut: [] });
+    graph.adjacencyList[newDummyVertex.number] = { neighborsIn: [], neighborsOut: [] };
     return newDummyVertex;
 };
 
