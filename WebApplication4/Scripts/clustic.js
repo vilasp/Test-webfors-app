@@ -18,9 +18,15 @@
 
 
     //Start by extracting subgraphs and create their positioning within the subgraph
-    var sub
+    var subgraphs = extractAndCreateSubGraphs();
 
-    var graph = constructGraph();
+    var subLayouts = [];
+
+    for (var i = 0; i < subgraphs.length - 1; i++) {
+        subLayouts[i] = constructGraph(subgraphs[i].vertices, subgraphs[i].edges);
+    }
+    
+    var graph = constructGraph(getTestVertices(),getTestEdges());
 
     //draw vertices
     createVertices(graph.vertices);
@@ -96,20 +102,69 @@ function createEdges(edges) {
 };
 
 function extractAndCreateSubGraphs() {
-    var vertices = getTestVertices(),
+    var vertices = getTestClusterVertices(),
         edges = getTestEdges(),
-        subgraphs = {};
+        subgraphs = { original : { vertices: [], edges: [] }};
 
+    //Add all vertices to the subgraph
     $.each(vertices, function () {
+
+        if (this.cluster !== undefined) {
+
+            if (subgraphs[this.cluster] === undefined) {
+                subgraphs[this.cluster] = { vertices: [this], edges: [] };
+            }
+
+            else if (subgraphs[this.cluster] !== undefined) {
+                subgraphs[this.cluster].vertices.push(this);
+            }
+
+        }
         
+        else {
+            subgraphs.original.vertices.push(this);
+        }
+
     });
 
-    
+    $.each(edges, function () {
+        var currentEdge = this,
+            isEdgePartOfCluster = false;
 
+        $.each(subgraphs, function () {
 
+            if (checkIfEdgeIsInCluster(this, currentEdge)) {
+                this.edges.push(currentEdge);
+                isEdgePartOfCluster = true;
+            }
 
+        });
 
+        if (!isEdgePartOfCluster)
+            subgraphs.original.edges.push(this);
+
+    });
+
+    return subgraphs;
 };
+
+//Checks if an edge is part of the current cluster
+function checkIfEdgeIsInCluster(cluster, edge) {
+    var to = false,
+        from = false;
+
+    $.each(cluster.vertices, function () {
+        if (this.label === edge.from)
+            from = true;
+        else if (this.label === edge.to)
+            to = true;
+    });
+
+    if (to && from)
+        return true;
+    else
+        return false;
+}
 
 //Create and return final test set of vertices
 function getFinalTestVertices() {
@@ -206,12 +261,30 @@ function getTestVertices() {
     return [node0, node1, node2, node3, node4, node5, node6, node7, node8, node9, node10, node11];
 };
 
+function getTestClusterVertices() {
+
+    var node0 = { "label": "node0" }
+    var node1 = { "label": "node1" }
+    var node2 = { "label": "node2" }
+    var node3 = { "label": "node3" , cluster : 'cluster2'}
+    var node4 = { "label": "node4" , cluster : 'cluster1'}
+    var node5 = { "label": "node5" , cluster : 'cluster2'}
+    var node6 = { "label": "node6" , cluster : 'cluster1'}
+    var node7 = { "label": "node7" , cluster : 'cluster2'}
+    var node8 = { "label": "node8" , cluster : 'cluster1'}
+    var node9 = { "label": "node9" }
+    var node10 = { "label": "node10" }
+    var node11 = { "label": "node11" }
+
+    return [node0, node1, node2, node3, node4, node5, node6, node7, node8, node9, node10, node11];
+};
+
 /************************ Graph construction start ***********************************/
-function constructGraph() {
+function constructGraph(vertices,edges) {
     var graph = { vertices: [], edges: [], adjacencyList: [] };
 
-    graph.edges = getTestEdges();
-    graph.vertices = getTestVertices();
+    graph.edges = edges;
+    graph.vertices = vertices;
 
     //Assign labels to each node and init adjacency lists
     assigningVertexAndLabelNumber(graph);
