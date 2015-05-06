@@ -38,7 +38,7 @@
     }
 
 
-    var graph = constructGraph(subgraphs.remaining.vertices,subgraphs.remaining.edges,subgraphs.remaining.numberOfOriginalVertices,true);
+    var graph = constructGraph(subgraphs.remaining.vertices,subgraphs.remaining.edges,subgraphs.remaining.numberOfOriginalVertices,false);
 
     for (var i = 0; i < graph.vertices.length; i++) {
 
@@ -280,11 +280,11 @@ function getTestEdges() {
     var edge16 = { "to": "node11", "from": "node10" };
     var edge17 = { "to": "node11", "from": "node11" };
     var edge18 = { "to": "node10", "from": "node10" };
-    //var edge19 = { "to": "node1", "from": "node5" };
-    //var edge20 = { "to": "node2", "from": "node10" };
-    //var edge21 = { "to": "node4", "from": "node8" };
-    return [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
-    //return [edge0, edge1, edge2, edge3, edge20, edge21, edge4, edge5, edge6, edge7, edge8, edge9, edge19, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];//
+    var edge19 = { "to": "node1", "from": "node5" };
+    var edge20 = { "to": "node2", "from": "node10" };
+    var edge21 = { "to": "node4", "from": "node8" };
+    //return [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
+    return [edge0, edge1, edge2, edge3, edge20, edge21, edge4, edge5, edge6, edge7, edge8, edge9, edge19, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];//
 };
 
 function getTestVertices() {
@@ -531,11 +531,12 @@ function removeAndStoreTwoLoops(graph) {
         if (graph.adjacencyList[from.number].neighborsIn.length > 0) {
             for (var index1 = 0; index1 < graph.adjacencyList[from.number].neighborsIn.length; index1++) {
                 if (graph.adjacencyList[from.number].neighborsIn[index1][0] === to.label && !checkIfTwoLoopAlreadyExist(currentEdge, twoLoopEdges)) {
-                    currentEdgeIsPartOfTwoLoop = true;
-                    $.each(graph.adjacencyList[from.number].neighborsOut, function (removeIndex) {
-                        if (this[0] === to.label) graph.adjacencyList[from.number].neighborsOut.splice(removeIndex, 1);
-                    });
-
+                    if(!checksCreatedSourceOrSink(graph,to,from,currentEdge)){
+                        currentEdgeIsPartOfTwoLoop = true;
+                        $.each(graph.adjacencyList[from.number].neighborsOut, function (removeIndex) {
+                            if (this[0] === to.label) graph.adjacencyList[from.number].neighborsOut.splice(removeIndex, 1);
+                        });
+                    }
                 }
             }
         }
@@ -557,6 +558,13 @@ function removeAndStoreTwoLoops(graph) {
     };
 
     return twoLoopEdges;
+};
+
+//Check if the removal of this edge create a new source or sink 
+function checksCreatedSourceOrSink(graph,to,from,currentEdge) {
+    if (graph.adjacencyList[from.number].neighborsOut.length < 2 || graph.adjacencyList[to.number].neighborsIn.length < 2)
+        return true;
+    return false;
 };
 
 //Check if a edge already had a reversed brother
