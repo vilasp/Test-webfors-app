@@ -25,14 +25,28 @@
         subgraphKeys = Object.keys(subgraphs);
 
     for (var i = 1; i < subgraphKeys.length; i++) {
-        subLayouts[i] = constructGraph(subgraphs[subgraphKeys[i]].vertices, subgraphs[subgraphKeys[i]].edges, subgraphs[subgraphKeys[i]].numberOfOriginalVertices);
+        subLayouts[i] = constructGraph(subgraphs[subgraphKeys[i]].vertices, subgraphs[subgraphKeys[i]].edges, subgraphs[subgraphKeys[i]].numberOfOriginalVertices,false);
     }
     
     //Change and store all the values of each subgraph so that the normal layering algorithm can be used
     changeAndStoreSubgraphValues(subLayouts, subgraphKeys);
 
+    //Merge all vertices and edges from subgraphs with the original sets
+    for (var i = 1; i < subgraphKeys.length; i++) {
+        $.merge(subgraphs.remaining.vertices, subLayouts[i].vertices);
+        $.merge(subgraphs.remaining.edges, subLayouts[i].edges);
+    }
 
-    var graph = constructGraph(getTestVertices(),getTestEdges(),12);
+
+    var graph = constructGraph(subgraphs.remaining.vertices,subgraphs.remaining.edges,subgraphs.remaining.numberOfOriginalVertices,true);
+
+    for (var i = 0; i < graph.vertices.length; i++) {
+
+        //Revers of layer
+        var reverseLayer = graph.layering.length - graph.vertices[i].layer;
+        graph.vertices[i].layer = reverseLayer;
+    };
+
 
     //draw vertices
     createVertices(graph.vertices);
@@ -65,10 +79,6 @@ function createVertices(vertices) {
             'left': (this.xCoordinate+4) * 100,
             'top': (this.layer) * 100
         });
-
-        if (this.dummy) {
-            tempVertex.addClass('invisiburu')
-        }
 
         //Update references in jsPlumb
         jsPlumb.setIdChanged(this.label, this.label);
@@ -110,8 +120,9 @@ function createEdges(edges) {
 function extractAndCreateSubGraphs() {
     var vertices = getTestClusterVertices(),
         edges = getTestEdges(),
-        numberOfOriginalVertices = vertices.length;
-        subgraphs = { remaining : { vertices: [], edges: [] }};
+        numberOfOriginalVertices = vertices.length,
+        subgraphs = { remaining : { vertices: [], edges: [] , numberOfOriginalVertices : numberOfOriginalVertices} };
+
 
     $.each(vertices, function () {
 
@@ -130,6 +141,7 @@ function extractAndCreateSubGraphs() {
         else {
             subgraphs.remaining.vertices.push(this);
         }
+
     });
 
 
@@ -312,7 +324,7 @@ function getTestClusterVertices() {
 };
 
 /************************ Graph construction start ***********************************/
-function constructGraph(vertices,edges,numberOfOriginalVertices) {
+function constructGraph(vertices,edges,numberOfOriginalVertices,dummies) {
     var graph = { vertices: [], edges: [], adjacencyList: [], numberOfOriginalVertices : numberOfOriginalVertices };
 
     graph.edges = edges;
@@ -378,28 +390,31 @@ function constructGraph(vertices,edges,numberOfOriginalVertices) {
     clusticEdgeStraightening(graph);
 
     //Step 5 - Reverse vertices layering so bottom is top and top is bottom
-    for (var i = 0; i < graph.vertices.length; i++) {
+  /*  for (var i = 0; i < graph.vertices.length; i++) {
 
         //Revers of layer
         var reverseLayer = graph.layering.length - graph.vertices[i].layer;
         graph.vertices[i].layer = reverseLayer;
-    };
+    };*/
 
-    //Step 5.1 - Remove all dummy vertices
-    for (var i = 0; i < graph.vertices.length; i++) {
-        if (graph.vertices[i].dummy) {
-            graph.vertices.splice(i, 1);
-            i--;
+    if (!dummies) {
+        //Step 5.1 - Remove all dummy vertices
+        for (var i = 0; i < graph.vertices.length; i++) {
+            if (graph.vertices[i].dummy) {
+                graph.vertices.splice(i, 1);
+                i--;
+            }
+        }
+
+        //Step 5.2 - Remove all dummy edges
+        for (var i = 0; i < graph.edges.length; i++) {
+            if (graph.edges[i].dummy) {
+                graph.edges.splice(i, 1);
+                i--;
+            }
         }
     }
-
-    //Step 5.2 - Remove all dummy edges
-    for (var i = 0; i < graph.edges.length; i++) {
-        if (graph.edges[i].dummy) {
-            graph.edges.splice(i, 1);
-            i--;
-        }
-    }
+   
 
     //Step 5.3 - Reverse fas edges back to original direction
     var reversedFas = reverseEdgesInFas(fas);
@@ -421,7 +436,7 @@ function constructGraph(vertices,edges,numberOfOriginalVertices) {
 function removeDuplicateEdges(graph, oldEdges) {
     for (var i = 0; i < oldEdges.length; i++) {
         $.each(graph.edges, function () {
-            if (oldEdges[i].label === this.label) {
+            if (oldEdges[i].to === this.to && oldEdges[i].from === this.from) {
                 oldEdges.splice(i, 1),
                 i--;
             }
@@ -1099,8 +1114,13 @@ function barycenter(graph, currentLayer, incidentMatrix) {
         }
 
         //Prevent NaN
-        if (colValue === 0) colValue = -1000;
-        graph.layering[currentLayer][row]['barycenter'] = colValue / numberOfEdges;
+        if (colValue === 0)
+            graph.layering[currentLayer][row]['barycenter'] = graph.layering[currentLayer][row]['xCoordinate'];
+        else {
+            graph.layering[currentLayer][row]['barycenter'] = colValue / numberOfEdges;
+            graph.layering[currentLayer][row]['xCoordinate'] = colValue / numberOfEdges;
+        }
+        
     }
 };
 
