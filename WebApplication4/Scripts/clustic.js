@@ -432,16 +432,24 @@ function constructGraph(vertices,edges,numberOfOriginalVertices,dummies) {
 };
 /************************ Graph construction end **************************************/
 
-//Remove all already existing edges from the set of original set
+//Remove all already existing edges from the set of original edges
 function removeDuplicateEdges(graph, oldEdges) {
     for (var i = 0; i < oldEdges.length; i++) {
-        $.each(graph.edges, function () {
-            if (oldEdges[i].to === this.to && oldEdges[i].from === this.from) {
+        if (oldEdges[i].reversed) {
+            oldEdges.splice(i, 1),
+                i--;
+        }
+
+
+        /*$.each(graph.edges, function () {
+            if ((oldEdges[i].to === this.to && oldEdges[i].from === this.from || oldEdges[i].reversed)) {
                 oldEdges.splice(i, 1),
                 i--;
+                
             }
-        });
+        });*/
     }
+
 };
 
 //Assign vertex numbers and init adjacency lists
@@ -808,7 +816,10 @@ function reverseEdgesInFas(fas) {
         this.from = to;
 
         //Update reverse attribute so we can keep track of reversed edges
-        this.reversed = true;
+        if (this.reversed)
+            this.reversed = false;
+        else
+            this.reversed = true;
     });
 }
 
@@ -1014,7 +1025,8 @@ function makeProperLayering(graph) {
     for (var index = 0; index < graph.edges.length; index++) {
         var to, from;
         var currentEdge = graph.edges[index];
-        var tmpDummies = [], tmpEdges = [];
+        var tmpDummies = [],
+            tmpEdges = [];
 
         //Get vertices in edge
         $.each(graph.vertices, function () {
