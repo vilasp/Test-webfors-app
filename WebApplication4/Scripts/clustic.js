@@ -339,6 +339,9 @@ function constructGraph(vertices,edges,numberOfOriginalVertices,dummies) {
     //Set neighbors of all vertices in the graph
     setNeighbors(graph);
 
+    //Calculate the distance matrix
+    var distanceMatrix = createDistanceMatrix(graph);
+
     //Remove two loops and store them separately 
     var twoLoopEdges = removeAndStoreTwoLoops(graph);
 
@@ -431,6 +434,67 @@ function constructGraph(vertices,edges,numberOfOriginalVertices,dummies) {
 
 };
 /************************ Graph construction end **************************************/
+
+//Construct the distance matrix
+function createDistanceMatrix(graph) {
+
+    var distanceMatrix = intiDistanceMatrix(graph);
+    breadthFirstSearch(graph, distanceMatrix);
+
+    return distanceMatrix;
+
+};
+
+//Initialize the distance matrix with values -1 for all but those edges moving back itself, 0 for them
+function intiDistanceMatrix(graph) {
+    var distanceMatrix = {};
+
+    $.each(graph.vertices, function () {
+        distanceMatrix[this.label] = {};
+        var rowVertex = this;
+        $.each(graph.vertices, function () {
+            if (rowVertex.label === this.label)
+                distanceMatrix[rowVertex.label][this.label] = 0;
+            else
+                distanceMatrix[rowVertex.label][this.label] = -1;
+        });
+    });
+
+    return distanceMatrix;
+};
+
+
+//Make a breadth-first search in order to construct a distance matrix 
+function breadthFirstSearch(graph, distanceMatrix) {
+    
+    $.each(graph.vertices, function () {
+        
+        var neigbors = $.merge([],graph.adjacencyList[this.number].neighborsOut);
+            alreadyVisited = [],
+            currentVertice = this,
+            currentCount = 1;
+
+
+        $.each(graph.adjacencyList[this.number].neighborsOut, function () {
+
+            if (!isInArray(this[0], alreadyVisited)) {
+
+                alreadyVisited.push(this[0]);
+                distanceMatrix[currentVertice][this[0]] = currentCount;
+
+            }
+
+            $.merge(neigbors, graph.adjacencyList[this[1]].neighborsOut);
+        });
+
+    });
+};
+
+function isInArray(value, array) {
+    return array.indexOf(value) > -1;
+}
+
+
 
 //Remove all already existing edges from the set of original edges
 function removeDuplicateEdges(graph, oldEdges) {
