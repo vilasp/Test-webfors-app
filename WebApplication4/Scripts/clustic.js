@@ -469,24 +469,32 @@ function breadthFirstSearch(graph, distanceMatrix) {
     
     $.each(graph.vertices, function () {
         
-        var neigbors = $.merge([],graph.adjacencyList[this.number].neighborsOut);
-            alreadyVisited = [],
+        var neigbors = [[this.label,this.number]],
+            alreadyVisited = [this.label],
+            tmpNeigbors = [],
             currentVertice = this,
-            currentCount = 1;
+            currentCount = 1,
+            done = false;
 
+            while (neigbors.length !== 0) {
+                $.each(graph.adjacencyList[neigbors[0][1]].neighborsOut, function () {
 
-        $.each(graph.adjacencyList[this.number].neighborsOut, function () {
+                    if (!isInArray(this[0], alreadyVisited)) {
+                        alreadyVisited.push(this[0]);
+                        distanceMatrix[currentVertice.label][this[0]] = currentCount;
+                        $.merge(tmpNeigbors, [this]);
+                    }
+                    
+                });
 
-            if (!isInArray(this[0], alreadyVisited)) {
+                neigbors.splice(0, 1);
 
-                alreadyVisited.push(this[0]);
-                distanceMatrix[currentVertice][this[0]] = currentCount;
-
+                if (neigbors.length === 0) {
+                    currentCount++;
+                    neigbors = tmpNeigbors;
+                    tmpNeigbors = [];
+                }
             }
-
-            $.merge(neigbors, graph.adjacencyList[this[1]].neighborsOut);
-        });
-
     });
 };
 
