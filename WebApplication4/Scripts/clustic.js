@@ -340,7 +340,7 @@ function constructGraph(vertices,edges,numberOfOriginalVertices,dummies) {
     setNeighbors(graph);
 
     //Calculate the distance matrix
-    var distanceMatrix = createDistanceMatrix(graph);
+    graph['distanceMatrix'] = createDistanceMatrix(graph);
 
     //Remove two loops and store them separately 
     var twoLoopEdges = removeAndStoreTwoLoops(graph);
@@ -611,10 +611,11 @@ function removeAndStoreTwoLoops(graph) {
         if (graph.adjacencyList[from.number].neighborsIn.length > 0) {
             for (var index1 = 0; index1 < graph.adjacencyList[from.number].neighborsIn.length; index1++) {
                 if (graph.adjacencyList[from.number].neighborsIn[index1][0] === to.label && !checkIfTwoLoopAlreadyExist(currentEdge, twoLoopEdges)) {
-                    if(!checksCreatedSourceOrSink(graph,to,from,currentEdge)){
+                    if(isFurthestFromSource(graph,from,to) && !checksCreatedSourceOrSink(graph,to,from,currentEdge)){
                         currentEdgeIsPartOfTwoLoop = true;
                         $.each(graph.adjacencyList[from.number].neighborsOut, function (removeIndex) {
-                            if (this[0] === to.label) graph.adjacencyList[from.number].neighborsOut.splice(removeIndex, 1);
+                            if (this[0] === to.label)
+                                graph.adjacencyList[from.number].neighborsOut.splice(removeIndex, 1);
                         });
                     }
                 }
@@ -639,6 +640,16 @@ function removeAndStoreTwoLoops(graph) {
 
     return twoLoopEdges;
 };
+
+//Check if the two loop edge is the one of the two where the from is furthest from the source node, preserving the possible layering of the graph
+function isFurthestFromSource(graph, from, to) {
+    var source = getSources([], graph);
+
+    if (graph.distanceMatrix[source[0].label][from.label] > graph.distanceMatrix[source[0].label][to.label])
+        return true;
+
+    return false;
+}
 
 //Check if the removal of this edge create a new source or sink 
 function checksCreatedSourceOrSink(graph,to,from,currentEdge) {
