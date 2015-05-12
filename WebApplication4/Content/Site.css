@@ -563,7 +563,8 @@ tr.pager td {
 }
 
 #drawing-area,#drawing-area2{
-    background: url(/Images/dotted_grid_resized.gif) repeat;
+    //background: url(/Images/dotted_grid_resized.gif) repeat;
+    background-color:white;
     height: 768px;
     width: 100%;
     position:relative;

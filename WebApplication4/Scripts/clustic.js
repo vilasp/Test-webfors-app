@@ -285,6 +285,7 @@ function getTestEdges() {
     var edge21 = { "to": "node4", "from": "node8" };
     //return [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
     return [edge0, edge1, edge2, edge3, edge20, edge21, edge4, edge5, edge6, edge7, edge8, edge9, edge19, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];//
+    //return [edge0,edge10,edge14];
 };
 
 function getTestVertices() {
@@ -321,6 +322,7 @@ function getTestClusterVertices() {
     var node11 = { "label": "node11" }
 
     return [node0, node1, node2, node3, node4, node5, node6, node7, node8, node9, node10, node11];
+    //return[node0,node1, node6,node9];
 };
 
 /************************ Graph construction start ***********************************/
@@ -346,7 +348,10 @@ function constructGraph(vertices,edges,numberOfOriginalVertices,dummies) {
     var twoLoopEdges = removeAndStoreTwoLoops(graph);
 
     //Step 1 - Contruct a FAS-set, returns an array where [0] = edges not in FAS, [1] = FAS
-    var fas = cycleRemoval(graph);
+   if (getSources([], graph).length === 1)
+        var fas = realBergerAndShor(graph);
+    else
+        var fas = cycleRemoval(graph);
 
     //Step 1.1 - Reverse edges left in FAS
     reverseEdgesInFas(fas);
@@ -420,13 +425,14 @@ function constructGraph(vertices,edges,numberOfOriginalVertices,dummies) {
    
 
     //Step 5.3 - Reverse fas edges back to original direction
+    removeDuplicateEdges(graph.edges)
     var reversedFas = reverseEdgesInFas(fas);
     $.merge(graph.edges, fas[1]);
 
     //Step 5.4 - Add all two loop, self loop edges and all edges replacing dummy edges back to the edge set
     $.merge(graph.edges, twoLoopEdges);
     $.merge(graph.edges, selfLoopEdges);
-    removeDuplicateEdges(graph, dummyVerticesAndEdges[2])
+    removeDuplicateEdges(dummyVerticesAndEdges[2])
     $.merge(graph.edges, dummyVerticesAndEdges[2]);
 
     return graph;
@@ -505,21 +511,12 @@ function isInArray(value, array) {
 
 
 //Remove all already existing edges from the set of original edges
-function removeDuplicateEdges(graph, oldEdges) {
+function removeDuplicateEdges(oldEdges) {
     for (var i = 0; i < oldEdges.length; i++) {
         if (oldEdges[i].reversed) {
-            oldEdges.splice(i, 1),
-                i--;
+            oldEdges.splice(i, 1);
+            i--;
         }
-
-
-        /*$.each(graph.edges, function () {
-            if ((oldEdges[i].to === this.to && oldEdges[i].from === this.from || oldEdges[i].reversed)) {
-                oldEdges.splice(i, 1),
-                i--;
-                
-            }
-        });*/
     }
 
 };
@@ -679,12 +676,30 @@ function cycleRemoval(graph) {
     return bergerAndShor(GCycleRemoval);
 };
 
-/*********************** Berger and Shor ***********************
+/*********************** Berger and Shor / enhanced greedy cycle removal ***********************
 Works by successively removing sources and sinks from the graph and placing
 them in separate sets. When no more sinks/ sources can be removed a vertex
 with largest degree is chosen. When no more vertices exist in the graph 
-the algorithm returns with a toplogical ordering of vertices.
+the algorithm returns with a toplogical ordering of vertices. 
 ***************************************************************/
+function realBergerAndShor(graph) {
+    var fas = [],
+        source = getSources([],graph)[0];
+
+
+
+    for (var i = 0; i < graph.edges.length; i++) {
+
+        var currentEdge = graph.edges[i];
+        if (graph.distanceMatrix[source.label][currentEdge.from] > graph.distanceMatrix[source.label][currentEdge.to]) {
+            fas.push(graph.edges[i]);
+            graph.edges.splice(i, 1);
+            i--;
+        }
+    }
+    return [graph.edges,fas];
+};
+
 function bergerAndShor(graph) {
 
     //create empty sets, s1 = sources append here, s2 sinks prepend here
