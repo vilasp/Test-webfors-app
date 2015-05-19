@@ -570,6 +570,7 @@ tr.pager td {
     position:relative;
 }
 
+
 .vertex{
     height: auto;
     width: auto;
@@ -649,6 +650,7 @@ a:active {
 }
 
 .component { 
+  width:40px;
   border:1px solid #346789; 
   border-radius:0.5em;
   opacity:0.8; 
@@ -671,6 +673,14 @@ a:active {
    -moz-box-shadow: 2px 2px 19px #fff;
     opacity:0.9;
     filter:alpha(opacity=90);
+}
+
+.dummy{
+    height:0px;
+    width:0px;
+    padding:0;
+    visibility:hidden;
+    border:none;
 }
 
 .invisiburu{

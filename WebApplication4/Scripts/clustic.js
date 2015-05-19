@@ -15,7 +15,7 @@
     /*//init final test sets
     var initFinalTestVertices = getFinalTestVertices();
     var initFinalTestEdges = getFinalTestEdges();*/
-
+    var dummies = true;
 
     //Start by extracting subgraphs and create their positioning within the subgraph
     var subgraphs = extractAndCreateSubGraphs();
@@ -25,9 +25,9 @@
         subgraphKeys = Object.keys(subgraphs);
 
     for (var i = 1; i < subgraphKeys.length; i++) {
-        subLayouts[i] = constructGraph(subgraphs[subgraphKeys[i]].vertices, subgraphs[subgraphKeys[i]].edges, subgraphs[subgraphKeys[i]].numberOfOriginalVertices,false);
+        subLayouts[i] = constructGraph(subgraphs[subgraphKeys[i]].vertices, subgraphs[subgraphKeys[i]].edges, subgraphs[subgraphKeys[i]].numberOfOriginalVertices, false);
     }
-    
+
     //Change and store all the values of each subgraph so that the normal layering algorithm can be used
     changeAndStoreSubgraphValues(subLayouts, subgraphKeys);
 
@@ -38,7 +38,7 @@
     }
 
 
-    var graph = constructGraph(subgraphs.remaining.vertices,subgraphs.remaining.edges,subgraphs.remaining.numberOfOriginalVertices,false);
+    var graph = constructGraph(subgraphs.remaining.vertices, subgraphs.remaining.edges, subgraphs.remaining.numberOfOriginalVertices, dummies);
 
     for (var i = 0; i < graph.vertices.length; i++) {
 
@@ -65,6 +65,8 @@ function createVertices(vertices) {
     //For each vertice in the graph
     $.each(vertices, function () {
 
+        var dummyAllignment = 0;
+
         //create vertex and append it to drawing area
         var tempVertex = jQuery('<div/>', {
             id: this.label,
@@ -74,10 +76,16 @@ function createVertices(vertices) {
         //add vertex-class
         tempVertex.addClass('component');
 
+        if (this.dummy) {
+            tempVertex.addClass('dummy');
+            tempVertex.empty();
+            dummyAllignment = 20;
+        }
+
         //Set appropriate coordinates of vertex
         tempVertex.css({
-            'left': (this.xCoordinate+4) * 100,
-            'top': (this.layer) * 100
+            'left': (this.xCoordinate * 100) + dummyAllignment,
+            'top': this.layer * 100
         });
 
         //Update references in jsPlumb
@@ -95,25 +103,27 @@ function createEdges(edges) {
     //For each edge, create a connection between TO and FROM with an arrow pointing in the direction of the flow
     $.each(edges, function () {
 
-        //Decide on connector drawing style
-        var connectorStyle;
-        if (this.reversed)
-            connectorStyle = ['StateMachine', { showLoopback: true }];
-        else
-            connectorStyle = 'Straight';
+        if (this.dummies === undefined) {
+            //Decide on connector drawing style
+            var connectorStyle;
+            if (this.selfLoop)
+                connectorStyle = ['StateMachine', { showLoopback: true }];
+            else
+                connectorStyle = 'Straight';
 
-        var edge = jsPlumb.connect({
-            source: this.from,
-            target: this.to,
-            anchors: [dynamicAnchors, "Continuous"],
-            endpoint: "Blank",
-            anchor: ["Perimeter", { shape: "Rectangle" }],
-            overlays: [
-                    ["Arrow", { width: 12, length: 12, location: 1 }]
-            ],
-            scope: "allEdges",
-            connector: connectorStyle
-        });
+            var edge = jsPlumb.connect({
+                source: this.from,
+                target: this.to,
+                anchors: [dynamicAnchors, "Continuous"],
+                endpoint: "Blank",
+                anchor: ["Perimeter", { shape: "Rectangle" }],
+                scope: "allEdges",
+                connector: connectorStyle
+            });
+
+            if (!$('#' + this.to).hasClass('dummy'))
+                edge.addOverlay(["Arrow", { width: 12, length: 12, location: 1 }]);
+        }
     });
 };
 
@@ -121,7 +131,7 @@ function extractAndCreateSubGraphs() {
     var vertices = getTestClusterVertices(),
         edges = getTestEdges(),
         numberOfOriginalVertices = vertices.length,
-        subgraphs = { remaining : { vertices: [], edges: [] , numberOfOriginalVertices : numberOfOriginalVertices} };
+        subgraphs = { remaining: { vertices: [], edges: [], numberOfOriginalVertices: numberOfOriginalVertices } };
 
 
     $.each(vertices, function () {
@@ -129,7 +139,7 @@ function extractAndCreateSubGraphs() {
         if (this.cluster !== undefined) {
 
             if (subgraphs[this.cluster] === undefined) {
-                subgraphs[this.cluster] = { vertices: [this], edges: [], numberOfOriginalVertices : numberOfOriginalVertices };
+                subgraphs[this.cluster] = { vertices: [this], edges: [], numberOfOriginalVertices: numberOfOriginalVertices };
             }
 
             else if (subgraphs[this.cluster] !== undefined) {
@@ -137,7 +147,7 @@ function extractAndCreateSubGraphs() {
             }
 
         }
-        
+
         else {
             subgraphs.remaining.vertices.push(this);
         }
@@ -185,13 +195,13 @@ function checkIfEdgeIsInCluster(cluster, edge) {
         return false;
 };
 
-function changeAndStoreSubgraphValues(subgraphs,subgraphKeys) {
+function changeAndStoreSubgraphValues(subgraphs, subgraphKeys) {
 
-    
+
     for (var i = 1; i < subgraphKeys.length; i++) {
 
         //Change and store vertices and their values
-        for(var j = 0; j < subgraphs[i].vertices.length; j++){
+        for (var j = 0; j < subgraphs[i].vertices.length; j++) {
 
             subgraphs[i].vertices[j]['clusterLayer'] = subgraphs[i].vertices[j].layer,
             subgraphs[i].vertices[j]['clusterLayerX'] = subgraphs[i].vertices[j].layerX,
@@ -284,8 +294,8 @@ function getTestEdges() {
     var edge20 = { "to": "node2", "from": "node10" };
     var edge21 = { "to": "node4", "from": "node8" };
     //return [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
-    return [edge0, edge1, edge2, edge3, edge20, edge21, edge4, edge5, edge6, edge7, edge8, edge9, edge19, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];//
-    //return [edge0,edge10,edge14];
+    return [edge0, edge1, edge2, edge3, edge20, edge21, edge4, edge5, edge6, edge7, edge8, edge9, edge19, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
+    //return [edge3, edge4, edge7,edge15,edge20,edge21, edge9, edge10, edge12, edge13, edge14];
 };
 
 function getTestVertices() {
@@ -311,23 +321,23 @@ function getTestClusterVertices() {
     var node0 = { "label": "node0" }
     var node1 = { "label": "node1" }
     var node2 = { "label": "node2" }
-    var node3 = { "label": "node3" , cluster : 'cluster2'}
-    var node4 = { "label": "node4" , cluster : 'cluster1'}
-    var node5 = { "label": "node5" , cluster : 'cluster2'}
-    var node6 = { "label": "node6" , cluster : 'cluster1'}
-    var node7 = { "label": "node7" , cluster : 'cluster2'}
-    var node8 = { "label": "node8" , cluster : 'cluster1'}
+    var node3 = { "label": "node3", cluster: 'cluster2' }
+    var node4 = { "label": "node4", cluster: 'cluster1', staticToVertex: { to: 'node8', yAxis: 'above' } }
+    var node5 = { "label": "node5", cluster: 'cluster2' }
+    var node6 = { "label": "node6", cluster: 'cluster1' }
+    var node7 = { "label": "node7", cluster: 'cluster2' }
+    var node8 = { "label": "node8", cluster: 'cluster1' }
     var node9 = { "label": "node9" }
     var node10 = { "label": "node10" }
     var node11 = { "label": "node11" }
 
     return [node0, node1, node2, node3, node4, node5, node6, node7, node8, node9, node10, node11];
-    //return[node0,node1, node6,node9];
+    //return[node2,node4, node6,node9,node8,node10];
 };
 
 /************************ Graph construction start ***********************************/
-function constructGraph(vertices,edges,numberOfOriginalVertices,dummies) {
-    var graph = { vertices: [], edges: [], adjacencyList: [], numberOfOriginalVertices : numberOfOriginalVertices };
+function constructGraph(vertices, edges, numberOfOriginalVertices, dummies) {
+    var graph = { vertices: [], edges: [], adjacencyList: [], numberOfOriginalVertices: numberOfOriginalVertices };
 
     graph.edges = edges;
     graph.vertices = vertices;
@@ -348,13 +358,13 @@ function constructGraph(vertices,edges,numberOfOriginalVertices,dummies) {
     var twoLoopEdges = removeAndStoreTwoLoops(graph);
 
     //Step 1 - Contruct a FAS-set, returns an array where [0] = edges not in FAS, [1] = FAS
-   if (getSources([], graph).length === 1)
+    /*if (getSources([], graph).length === 1)
         var fas = realBergerAndShor(graph);
-    else
+    else*/
         var fas = cycleRemoval(graph);
 
     //Step 1.1 - Reverse edges left in FAS
-    reverseEdgesInFas(fas);
+    reverseEdgesInFas(fas[1]);
 
     //Step 1.2 - Update graph with new structure
     var newEdges = $.merge(fas[0], fas[1]);
@@ -372,12 +382,10 @@ function constructGraph(vertices,edges,numberOfOriginalVertices,dummies) {
     graph['layering'] = layeredVertices[1];
 
     //Step 2.2 - Reintroduce vertices under static constraints
-    reIntroduceStaticConstraintsVertices(graph, verticesUnderConstraints,'y');
+    reIntroduceStaticConstraintsVertices(graph, verticesUnderConstraints, 'y');
 
     //Step 2.3 - Make proper layering
-    var dummyVerticesAndEdges = makeProperLayering(graph);
-    addDummyVerticesToGraphAndLayering(graph, dummyVerticesAndEdges[0]);
-    addDummyEdgesToGraph(graph, dummyVerticesAndEdges[1]);
+    var removedOriginalEdges = makeProperLayering(graph);
 
     //Step 2.4 - Remove leftover edges in the graph
     removeAllNeighbors(graph);
@@ -392,18 +400,18 @@ function constructGraph(vertices,edges,numberOfOriginalVertices,dummies) {
     clusticEdgeCrossingMinimization(graph);
 
     //Step 3.2 - Reintroduce removed vertices back into the vertices set
-    reIntroduceStaticConstraintsVertices(graph, verticesUnderConstraints,'x');
+    reIntroduceStaticConstraintsVertices(graph, verticesUnderConstraints, 'x');
 
     //Step 4 - x-coordinate assignment
     clusticEdgeStraightening(graph);
 
     //Step 5 - Reverse vertices layering so bottom is top and top is bottom
-  /*  for (var i = 0; i < graph.vertices.length; i++) {
-
-        //Revers of layer
-        var reverseLayer = graph.layering.length - graph.vertices[i].layer;
-        graph.vertices[i].layer = reverseLayer;
-    };*/
+    /*  for (var i = 0; i < graph.vertices.length; i++) {
+  
+          //Revers of layer
+          var reverseLayer = graph.layering.length - graph.vertices[i].layer;
+          graph.vertices[i].layer = reverseLayer;
+      };*/
 
     if (!dummies) {
         //Step 5.1 - Remove all dummy vertices
@@ -422,18 +430,21 @@ function constructGraph(vertices,edges,numberOfOriginalVertices,dummies) {
             }
         }
     }
-   
+
+
+    $.merge(graph.edges, removedOriginalEdges);
 
     //Step 5.3 - Reverse fas edges back to original direction
     removeDuplicateEdges(graph.edges)
-    var reversedFas = reverseEdgesInFas(fas);
+    var reversedFas = reverseEdgesInFas(fas[1]);
     $.merge(graph.edges, fas[1]);
 
     //Step 5.4 - Add all two loop, self loop edges and all edges replacing dummy edges back to the edge set
+   
     $.merge(graph.edges, twoLoopEdges);
     $.merge(graph.edges, selfLoopEdges);
-    removeDuplicateEdges(dummyVerticesAndEdges[2])
-    $.merge(graph.edges, dummyVerticesAndEdges[2]);
+    //removeDuplicateEdges(dummyVerticesAndEdges[2])
+    //$.merge(graph.edges, dummyVerticesAndEdges[2]);
 
     return graph;
 
@@ -472,35 +483,35 @@ function intiDistanceMatrix(graph) {
 
 //Make a breadth-first search in order to construct a distance matrix 
 function breadthFirstSearch(graph, distanceMatrix) {
-    
+
     $.each(graph.vertices, function () {
-        
-        var neigbors = [[this.label,this.number]],
+
+        var neigbors = [[this.label, this.number]],
             alreadyVisited = [this.label],
             tmpNeigbors = [],
             currentVertice = this,
             currentCount = 1,
             done = false;
 
-            while (neigbors.length !== 0) {
-                $.each(graph.adjacencyList[neigbors[0][1]].neighborsOut, function () {
+        while (neigbors.length !== 0) {
+            $.each(graph.adjacencyList[neigbors[0][1]].neighborsOut, function () {
 
-                    if (!isInArray(this[0], alreadyVisited)) {
-                        alreadyVisited.push(this[0]);
-                        distanceMatrix[currentVertice.label][this[0]] = currentCount;
-                        $.merge(tmpNeigbors, [this]);
-                    }
-                    
-                });
-
-                neigbors.splice(0, 1);
-
-                if (neigbors.length === 0) {
-                    currentCount++;
-                    neigbors = tmpNeigbors;
-                    tmpNeigbors = [];
+                if (!isInArray(this[0], alreadyVisited)) {
+                    alreadyVisited.push(this[0]);
+                    distanceMatrix[currentVertice.label][this[0]] = currentCount;
+                    $.merge(tmpNeigbors, [this]);
                 }
+
+            });
+
+            neigbors.splice(0, 1);
+
+            if (neigbors.length === 0) {
+                currentCount++;
+                neigbors = tmpNeigbors;
+                tmpNeigbors = [];
             }
+        }
     });
 };
 
@@ -551,7 +562,7 @@ function removeAndStoreSelfLoops(graph) {
     for (index = 0; index < graph.edges.length; index++) {
         if (graph.edges[index].from === graph.edges[index].to) {
             deepCopyElement = $.extend(true, {}, graph.edges[index]);
-            deepCopyElement['reversed'] = true;
+            deepCopyElement['selfLoop'] = true;
             selfLoopEdges.push(deepCopyElement)
             graph.edges.splice(index, 1);
             index--;
@@ -608,7 +619,7 @@ function removeAndStoreTwoLoops(graph) {
         if (graph.adjacencyList[from.number].neighborsIn.length > 0) {
             for (var index1 = 0; index1 < graph.adjacencyList[from.number].neighborsIn.length; index1++) {
                 if (graph.adjacencyList[from.number].neighborsIn[index1][0] === to.label && !checkIfTwoLoopAlreadyExist(currentEdge, twoLoopEdges)) {
-                    if(isFurthestFromSource(graph,from,to) && !checksCreatedSourceOrSink(graph,to,from,currentEdge)){
+                    if (isFurthestFromSource(graph, from, to) && !checksCreatedSourceOrSink(graph, to, from, currentEdge)) {
                         currentEdgeIsPartOfTwoLoop = true;
                         $.each(graph.adjacencyList[from.number].neighborsOut, function (removeIndex) {
                             if (this[0] === to.label)
@@ -649,13 +660,13 @@ function isFurthestFromSource(graph, from, to) {
 }
 
 //Check if the removal of this edge create a new source or sink 
-function checksCreatedSourceOrSink(graph,to,from,currentEdge) {
+function checksCreatedSourceOrSink(graph, to, from, currentEdge) {
     if (graph.adjacencyList[from.number].neighborsOut.length < 2 || graph.adjacencyList[to.number].neighborsIn.length < 2)
         return true;
     return false;
 };
 
-//Check if a edge already had a reversed brother
+//Check if a edge already h ad a reversed brother
 function checkIfTwoLoopAlreadyExist(edge, existingTwoLoopEdges) {
     var findReverse = false;
     $.each(existingTwoLoopEdges, function () {
@@ -684,7 +695,7 @@ the algorithm returns with a toplogical ordering of vertices.
 ***************************************************************/
 function realBergerAndShor(graph) {
     var fas = [],
-        source = getSources([],graph)[0];
+        source = getSources([], graph)[0];
 
 
 
@@ -697,7 +708,7 @@ function realBergerAndShor(graph) {
             i--;
         }
     }
-    return [graph.edges,fas];
+    return [graph.edges, fas];
 };
 
 function bergerAndShor(graph) {
@@ -902,9 +913,12 @@ function removeFromNeighborLists(type, neighborList, vertex, graph) {
 
 };
 
-function reverseEdgesInFas(fas) {
-    $.each(fas[1], function () {
+function reverseEdgesInFas(edges) {
+    $.each(edges, function () {
 
+        if (this.dummies !== undefined) {
+            reverseEdgesInFas(this.dummies.dummyEdges);
+        }
         //Store original values
         var to = this.to;
         var from = this.from;
@@ -929,17 +943,6 @@ function getHighestEdgeLabel(graph) {
     return undefined
 };
 
-function addDummyVerticesToGraphAndLayering(graph, dummies) {
-    $.each(dummies, function () {
-        graph.vertices.push(this);
-        graph.layering[this.layer].push(this);
-    });
-};
-
-function addDummyEdgesToGraph(graph, dummies) {
-    $.merge(graph.edges, dummies);
-};
-
 function removeAllNeighbors(graph) {
     $.each(graph.adjacencyList, function () {
         this.neighborsIn = [];
@@ -948,8 +951,8 @@ function removeAllNeighbors(graph) {
 };
 /****************************** Longest-path algrithm ************************************************/
 function clusticLongestPath(graph) {
-    var alreadyPicked = [], 
-        layering = [], 
+    var alreadyPicked = [],
+        layering = [],
         currentLayerVertices = [],
         verticesUnderConstraints = [];
     var currentLayer = 1;
@@ -1022,12 +1025,12 @@ function checkMostEdgesInPreviousLayer(graph, previousLayer) {
 }
 
 //Removes one of the two vertices under constraints with each other
-function removeAndStoreVerticesUnderConstraints(graph, type){
+function removeAndStoreVerticesUnderConstraints(graph, type) {
     var verticesUnderConstraints = [];
 
     for (var i = 0; i < graph.vertices.length; i++) {
         var currentVertex = graph.vertices[i];
-        if(currentVertex.staticToVertex !== undefined){
+        if (currentVertex.staticToVertex !== undefined) {
             var tmpVertex = {};
 
             if (type === 'x' && currentVertex.staticToVertex.xAxis !== undefined) {
@@ -1047,21 +1050,21 @@ function removeAndStoreVerticesUnderConstraints(graph, type){
                 tmpVertex['neighborsOut'] = graph.adjacencyList[tmpVertex.vertex.number].neighborsOut;
                 verticesUnderConstraints.push(tmpVertex);
                 removeVertex("largestDegree", graph, currentVertex);
-            } 
-        }   
+            }
+        }
     };
     return verticesUnderConstraints;
 }
 
 //Re introduces the removed vertices back into the set
-function reIntroduceStaticConstraintsVertices(graph, verticesUnderConstraint,type) {
+function reIntroduceStaticConstraintsVertices(graph, verticesUnderConstraint, type) {
     $.each(verticesUnderConstraint, function () {
 
         if (type === 'y') {
             placeVertexInLayer(graph, this);
         }
         else if (type === 'x') {
-            placeVertexInOrderInLayer(graph,this)
+            placeVertexInOrderInLayer(graph, this)
         }
 
         graph.vertices.push(this.vertex);
@@ -1070,13 +1073,13 @@ function reIntroduceStaticConstraintsVertices(graph, verticesUnderConstraint,typ
     });
 };
 
-function placeVertexInLayer(graph,currentVertex) {
+function placeVertexInLayer(graph, currentVertex) {
     $.each(graph.vertices, function () {
         if (this.label === currentVertex.vertex.staticToVertex.to) {
             if (currentVertex.vertex.staticToVertex.yAxis === 'below') {
                 if (this.layer === 0) {
                     currentVertex.vertex['layer'] = 0;
-                    graph.layering.splice(0, 0,[]);
+                    graph.layering.splice(0, 0, []);
                 } else {
                     currentVertex.vertex['layer'] = this.layer - 1;
                 }
@@ -1089,12 +1092,12 @@ function placeVertexInLayer(graph,currentVertex) {
     });
 };
 
-function placeVertexInOrderInLayer(graph,currentVertex) {
+function placeVertexInOrderInLayer(graph, currentVertex) {
     $.each(graph.vertices, function () {
         if (this.label === currentVertex.vertex.staticToVertex.to) {
             var fromIndex,
                 toIndex,
-                positionWithinLayer = getPositionWithinLayer(graph,this);
+                positionWithinLayer = getPositionWithinLayer(graph, this);
 
             if (currentVertex.vertex.staticToVertex.xAxis === 'left') {
                 currentVertex.vertex['layerX'] = positionWithinLayer;
@@ -1104,14 +1107,14 @@ function placeVertexInOrderInLayer(graph,currentVertex) {
                 currentVertex.vertex['layerX'] = positionWithinLayer + 1;
                 fromIndex = positionWithinLayer + 1;
             }
-            graph.layering[currentVertex.vertex.layer].splice(fromIndex,0,currentVertex.vertex)
+            graph.layering[currentVertex.vertex.layer].splice(fromIndex, 0, currentVertex.vertex)
         }
     });
 };
 
 function getPositionWithinLayer(graph, searchVertex) {
     for (var i = 0; i < graph.layering[searchVertex.layer].length; i++) {
-        if(graph.layering[searchVertex.layer][i].label == searchVertex.label)
+        if (graph.layering[searchVertex.layer][i].label == searchVertex.label)
             return i
     }
 };
@@ -1119,12 +1122,13 @@ function getPositionWithinLayer(graph, searchVertex) {
 
 /****************************** Proper layering *****************************************************/
 function makeProperLayering(graph) {
-    var dummyVertices = [], dummyEdges = [], oldEdges = [];
+    var oldEdges = [];
+
     for (var index = 0; index < graph.edges.length; index++) {
         var to, from;
         var currentEdge = graph.edges[index];
-        var tmpDummies = [],
-            tmpEdges = [];
+        var dummyVertices = [],
+            dummyEdges = [];
 
         //Get vertices in edge
         $.each(graph.vertices, function () {
@@ -1132,41 +1136,48 @@ function makeProperLayering(graph) {
             else if (currentEdge.to === this.label) to = this;
         });
 
+        if (currentEdge.dummies)
+            delete currentEdge.dummies;
+
         var span = Math.abs(from.layer - to.layer);
         if (span > 1) {
             for (var index1 = 0; index1 < span - 1; index1++) {
                 if (index1 === 0)
-                    tmpDummies.push(createDummyVertex(graph, from));
+                    dummyVertices.push(createDummyVertex(graph, from));
                 else
-                    tmpDummies.push(createDummyVertex(graph, tmpDummies[index1 - 1]));
+                    dummyVertices.push(createDummyVertex(graph, dummyVertices[index1 - 1]));
             };
 
             for (var index2 = 0; index2 < span; index2++) {
 
                 var tmpEdge;
                 if (index2 === 0) {
-                    tmpEdge = createDummyEdge(from, tmpDummies[index2], true);
+                    tmpEdge = createDummyEdge(graph, from, dummyVertices[index2]);
                     //updateAdjacencyList(graph, from, tmpDummies[index2]);
                 }
 
                 else if (index2 < span - 1) {
-                    tmpEdge = createDummyEdge(tmpDummies[index2 - 1], tmpDummies[index2], true);
+                    tmpEdge = createDummyEdge(graph, dummyVertices[index2 - 1], dummyVertices[index2]);
                     //updateAdjacencyList(graph, tmpDummies[index2 - 1], tmpDummies[index2]);
                 }
 
                 else {
-                    tmpEdge = createDummyEdge(tmpDummies[index2 - 1], to, true);
+                    tmpEdge = createDummyEdge(graph, dummyVertices[index2 - 1], to);
                     //updateAdjacencyList(graph, tmpDummies[index2-1], to);
                 }
                 dummyEdges.push(tmpEdge);
             };
+            currentEdge['dummies'] = { dummyVertices: dummyVertices, dummyEdges: dummyEdges };
             var originalEdge = jQuery.extend(true, {}, graph.edges[index]);
             oldEdges.push(originalEdge);
             graph.edges.splice(index, 1);
             index--;
+
         }
+
+
     };
-    return [dummyVertices, dummyEdges, oldEdges];
+    return oldEdges;
 };
 
 function createDummyVertex(graph, fromParent) {
@@ -1182,7 +1193,7 @@ function createDummyVertex(graph, fromParent) {
     } else {
         newDummyVertex['layer'] = fromParent.layer - 1;
     }
-    
+
     newDummyVertex['dummy'] = true;
     graph.vertices.push(newDummyVertex);
     graph.layering[newDummyVertex.layer].push(newDummyVertex);
@@ -1190,11 +1201,12 @@ function createDummyVertex(graph, fromParent) {
     return newDummyVertex;
 };
 
-function createDummyEdge(from, to) {
+function createDummyEdge(graph, from, to) {
     var newDummyEdge = {};
     newDummyEdge['to'] = to.label;
     newDummyEdge['from'] = from.label;
     newDummyEdge['dummy'] = true;
+    graph.edges.push(newDummyEdge);
     return newDummyEdge;
 
 };
@@ -1238,7 +1250,7 @@ function barycenter(graph, currentLayer, incidentMatrix) {
             graph.layering[currentLayer][row]['barycenter'] = colValue / numberOfEdges;
             graph.layering[currentLayer][row]['xCoordinate'] = colValue / numberOfEdges;
         }
-        
+
     }
 };
 
@@ -1387,7 +1399,7 @@ function sweepXCoordinateUpDown(graph) {
         setPriority(graph, currentLayer, 'upToDown');
 
         //Set the Barycenters of the current layer
-        xCoordinateBarycenter(graph, currentLayer, incidentMatrix, graph.layering[currentLayer + 1],'upToDown');
+        xCoordinateBarycenter(graph, currentLayer, incidentMatrix, graph.layering[currentLayer + 1], 'upToDown');
 
         //Copy the current layer into a new set for temporary removal
         var tmpCurrentLayer = jQuery.extend(true, [], graph.layering[currentLayer]);
@@ -1414,22 +1426,22 @@ function xCoordinateBarycenter(graph, currentLayer, incidentMatrix, fixedLayer, 
         //Prevent NaN
         if (colValue === 0 && numberOfEdges === 0)
             graph.layering[currentLayer][row]['barycenter'] = graph.layering[currentLayer][row].xCoordinate;
-        else if ((colValue / numberOfEdges) % 1 !== 0 && checkDummyNeighbors(graph, graph.layering[currentLayer][row], type,(colValue / numberOfEdges)))
+        else if ((colValue / numberOfEdges) % 1 !== 0 && checkDummyNeighbors(graph, graph.layering[currentLayer][row], type, (colValue / numberOfEdges)))
             graph.layering[currentLayer][row]['barycenter'] = Math.floor(colValue / numberOfEdges);
         else
             graph.layering[currentLayer][row]['barycenter'] = Math.round(colValue / numberOfEdges);
     }
 };
 
-function checkDummyNeighbors(graph, currentVertex,type,barycenter) {
+function checkDummyNeighbors(graph, currentVertex, type, barycenter) {
     var neighborList;
 
-    if(type === 'downToUp')
+    if (type === 'downToUp')
         neighborList = graph.adjacencyList[currentVertex.number].neighborsOut;
     else
         neighborList = graph.adjacencyList[currentVertex.number].neighborsIn;
-    
-    
+
+
     var closestDummy = 100000,
         closestLeftDummy = 10000;
 

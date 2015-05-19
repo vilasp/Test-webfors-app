@@ -207,6 +207,7 @@
     <Content Include="Global.asax" />
     <Content Include="packages.config" />
     <None Include="Scripts\jquery-1.8.2.intellisense.js" />
+    <Content Include="Scripts\BFS.js" />
     <Content Include="Scripts\clickme.js" />
     <Content Include="Scripts\clustic.js" />
     <Content Include="Scripts\init_components.js" />
