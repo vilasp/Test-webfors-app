@@ -25,13 +25,20 @@
         subgraphKeys = Object.keys(subgraphs);
 
     for (var i = 1; i < subgraphKeys.length; i++) {
-        subLayouts[i] = constructGraph(subgraphs[subgraphKeys[i]].vertices, subgraphs[subgraphKeys[i]].edges, subgraphs[subgraphKeys[i]].numberOfOriginalVertices, dummies);
+        subLayouts[i] = constructGraph(subgraphs[subgraphKeys[i]].vertices, subgraphs[subgraphKeys[i]].edges, subgraphs[subgraphKeys[i]].numberOfOriginalVertices, false);
     }
 
     //Change and store all the values of each subgraph so that the normal layering algorithm can be used
     changeAndStoreSubgraphValues(subLayouts, subgraphKeys);
 
-    var graph = constructClusticGraph(dummies,subgraphs,subLayouts,subgraphKeys);
+    //Merge all vertices and edges from subgraphs with the original sets
+    for (var i = 1; i < subgraphKeys.length; i++) {
+        $.merge(subgraphs.remaining.vertices, subLayouts[i].vertices);
+        $.merge(subgraphs.remaining.edges, subLayouts[i].edges);
+    }
+
+
+    var graph = constructGraph(subgraphs.remaining.vertices, subgraphs.remaining.edges, subgraphs.remaining.numberOfOriginalVertices, dummies);
 
     for (var i = 0; i < graph.vertices.length; i++) {
 
@@ -77,7 +84,7 @@ function createVertices(vertices) {
 
         //Set appropriate coordinates of vertex
         tempVertex.css({
-            'left': ((this.xCoordinate+4) * 100) + dummyAllignment,
+            'left': (this.xCoordinate * 100) + dummyAllignment,
             'top': this.layer * 100
         });
 
@@ -286,10 +293,9 @@ function getTestEdges() {
     var edge19 = { "to": "node1", "from": "node5" };
     var edge20 = { "to": "node2", "from": "node10" };
     var edge21 = { "to": "node4", "from": "node8" };
-    //return [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
+    return [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
     //return [edge0, edge1, edge2, edge3, edge20, edge21, edge4, edge5, edge6, edge7, edge8, edge9, edge19, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
     //return [edge3, edge4, edge7,edge15,edge20,edge21, edge9, edge10, edge12, edge13, edge14];
-    return [edge0, edge1, edge2,edge19,edge20, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
 };
 
 function getTestVertices() {
@@ -313,14 +319,14 @@ function getTestVertices() {
 function getTestClusterVertices() {
 
     var node0 = { "label": "node0" }
-    var node1 = { "label": "node1", cluster: 'cluster2' }
+    var node1 = { "label": "node1" }
     var node2 = { "label": "node2" }
     var node3 = { "label": "node3", cluster: 'cluster2' }
-    var node4 = { "label": "node4"}
+    var node4 = { "label": "node4", cluster: 'cluster1' }
     var node5 = { "label": "node5", cluster: 'cluster2' }
-    var node6 = { "label": "node6"}
-    var node7 = { "label": "node7"}
-    var node8 = { "label": "node8"}
+    var node6 = { "label": "node6", cluster: 'cluster1' }
+    var node7 = { "label": "node7", cluster: 'cluster2' }
+    var node8 = { "label": "node8", cluster: 'cluster1' }
     var node9 = { "label": "node9" }
     var node10 = { "label": "node10" }
     var node11 = { "label": "node11" }
@@ -428,123 +434,6 @@ function constructGraph(vertices, edges, numberOfOriginalVertices, dummies) {
     /*if (getSources([], graph).length === 1)
         var fas = realBergerAndShor(graph);
     else*/
-        var fas = cycleRemoval(graph);
-
-    //Step 1.1 - Reverse edges left in FAS
-    reverseEdgesInFas(fas[1]);
-
-    //Step 1.2 - Update graph with new structure
-    var newEdges = $.merge(fas[0], fas[1]);
-    graph.edges = newEdges;
-    graph.adjacencyList = [];
-    assigningVertexAndLabelNumber(graph);
-    setNeighbors(graph);
-
-    //Step 2 - Remove  vertices under static constraints on y position
-    var verticesUnderConstraints = removeAndStoreVerticesUnderConstraints(graph, 'y');
-
-    //Step 2.1 - Make a layering of the graph
-    var layeredVertices = longestPath(graph);
-    graph.vertices = layeredVertices[0];
-    graph['layering'] = layeredVertices[1];
-
-    //Step 2.2 - Reintroduce vertices under static constraints
-    reIntroduceStaticConstraintsVertices(graph, verticesUnderConstraints, 'y');
-
-    //Step 2.3 - Make proper layering
-    var removedOriginalEdges = makeProperLayering(graph);
-
-    //Step 2.4 - Remove leftover edges in the graph
-    removeAllNeighbors(graph);
-
-    //Step 2.5 - Add all the edges, original + dummies
-    setNeighbors(graph);
-
-    //Step 3 - Remove all vertices with constraints on x position
-    var verticesUnderConstraints = removeAndStoreVerticesUnderConstraints(graph, 'x');
-
-    //Step 3.1 - Edge crossing minimization
-    edgeCrossingMinimization(graph);
-
-    //Step 3.2 - Reintroduce removed vertices back into the vertices set
-    reIntroduceStaticConstraintsVertices(graph, verticesUnderConstraints, 'x');
-
-    //Step 4 - x-coordinate assignment
-    edgeStraightening(graph);
-
-    //Step 5 - Reverse vertices layering so bottom is top and top is bottom
-    /*  for (var i = 0; i < graph.vertices.length; i++) {
-  
-          //Revers of layer
-          var reverseLayer = graph.layering.length - graph.vertices[i].layer;
-          graph.vertices[i].layer = reverseLayer;
-      };*/
-
-    if (!dummies) {
-        //Step 5.1 - Remove all dummy vertices
-        for (var i = 0; i < graph.vertices.length; i++) {
-            if (graph.vertices[i].dummy) {
-                graph.vertices.splice(i, 1);
-                i--;
-            }
-        }
-
-        //Step 5.2 - Remove all dummy edges
-        for (var i = 0; i < graph.edges.length; i++) {
-            if (graph.edges[i].dummy) {
-                graph.edges.splice(i, 1);
-                i--;
-            }
-        }
-    }
-
-
-    $.merge(graph.edges, removedOriginalEdges);
-
-    //Step 5.3 - Reverse fas edges back to original direction
-    removeDuplicateEdges(graph.edges)
-    //var reversedFas = reverseEdgesInFas(fas[1]);
-   // $.merge(graph.edges, fas[1]);
-
-    //Step 5.4 - Add all two loop, self loop edges and all edges replacing dummy edges back to the edge set
-    graph['fas'] = fas[1];
-    $.merge(graph.edges, twoLoopEdges);
-    $.merge(graph.edges, selfLoopEdges);
-    //removeDuplicateEdges(dummyVerticesAndEdges[2])
-    //$.merge(graph.edges, dummyVerticesAndEdges[2]);
-
-    return graph;
-
-
-};
-/************************ Graph construction end **************************************/
-
-/************************ CluStic Graph construction start ***********************************/
-function constructClusticGraph(dummies, subgraphs,subLayouts,subgraphKeys) {
-    var graph = { vertices: [], edges: [], adjacencyList: [], numberOfOriginalVertices: subgraphs.remaining.numberOfOriginalVertices };
-
-    graph.edges = subgraphs.remaining.edges;
-    graph.vertices = subgraphs.remaining.vertices;
-
-    //Assign labels to each node and init adjacency lists
-    assigningVertexAndLabelNumber(graph);
-
-    //Remove self loop edges and store separately
-    var selfLoopEdges = removeAndStoreSelfLoops(graph);
-
-    //Set neighbors of all vertices in the graph
-    setNeighbors(graph);
-
-    //Calculate the distance matrix
-    graph['distanceMatrix'] = createDistanceMatrix(graph);
-
-    //Remove two loops and store them separately 
-    var twoLoopEdges = removeAndStoreTwoLoops(graph);
-
-    //Step 1 - Contruct a FAS-set, returns an array where [0] = edges not in FAS, [1] = FAS
-    /*if (getSources([], graph).length === 1)
-        var fas = realBergerAndShor(graph);
-    else*/
     var fas = cycleRemoval(graph);
 
     //Step 1.1 - Reverse edges left in FAS
@@ -554,14 +443,6 @@ function constructClusticGraph(dummies, subgraphs,subLayouts,subgraphKeys) {
     var newEdges = $.merge(fas[0], fas[1]);
     graph.edges = newEdges;
     graph.adjacencyList = [];
-
-    //Merge all vertices and edges from subgraphs with the original sets
-    for (var i = 1; i < subgraphKeys.length; i++) {
-        $.merge(graph.vertices, subLayouts[i].vertices);
-        $.merge(graph.edges, subLayouts[i].edges);
-    }
-
-    //Update new graph structure
     assigningVertexAndLabelNumber(graph);
     setNeighbors(graph);
 
@@ -569,7 +450,7 @@ function constructClusticGraph(dummies, subgraphs,subLayouts,subgraphKeys) {
     var verticesUnderConstraints = removeAndStoreVerticesUnderConstraints(graph, 'y');
 
     //Step 2.1 - Make a layering of the graph
-    var layeredVertices = longestPath(graph);
+    var layeredVertices = clusticLongestPath(graph);
     graph.vertices = layeredVertices[0];
     graph['layering'] = layeredVertices[1];
 
@@ -589,13 +470,13 @@ function constructClusticGraph(dummies, subgraphs,subLayouts,subgraphKeys) {
     var verticesUnderConstraints = removeAndStoreVerticesUnderConstraints(graph, 'x');
 
     //Step 3.1 - Edge crossing minimization
-    edgeCrossingMinimization(graph);
+    clusticEdgeCrossingMinimization(graph);
 
     //Step 3.2 - Reintroduce removed vertices back into the vertices set
     reIntroduceStaticConstraintsVertices(graph, verticesUnderConstraints, 'x');
 
     //Step 4 - x-coordinate assignment
-    edgeStraightening(graph);
+    clusticEdgeStraightening(graph);
 
     //Step 5 - Reverse vertices layering so bottom is top and top is bottom
     /*  for (var i = 0; i < graph.vertices.length; i++) {
@@ -628,11 +509,6 @@ function constructClusticGraph(dummies, subgraphs,subLayouts,subgraphKeys) {
 
     //Step 5.3 - Reverse fas edges back to original direction
     removeDuplicateEdges(graph.edges)
-    //Merge all fa sets original sets
-    for (var i = 1; i < subgraphKeys.length; i++) {
-        $.merge(fas[1], subLayouts[i].fas);
-    }
-
     var reversedFas = reverseEdgesInFas(fas[1]);
     $.merge(graph.edges, fas[1]);
 
@@ -647,7 +523,7 @@ function constructClusticGraph(dummies, subgraphs,subLayouts,subgraphKeys) {
 
 
 };
-/************************ CluStic Graph construction end **************************************/
+/************************ Graph construction end **************************************/
 
 //Construct the distance matrix
 function createDistanceMatrix(graph) {
@@ -786,12 +662,9 @@ function setNeighbors(graph) {
 
         });
 
-        if (from !== undefined && to !== undefined) {
-            graph.adjacencyList[from.number].neighborsOut.push([currentEdge.to, to.number,to.cluster]);
-            graph.adjacencyList[to.number].neighborsIn.push([currentEdge.from, from.number,from.cluster]);
-        }
-        else
-            currentEdge['falseFasEdge'] = true;
+        graph.adjacencyList[from.number].neighborsOut.push([currentEdge.to, to.number]);
+        graph.adjacencyList[to.number].neighborsIn.push([currentEdge.from, from.number]);
+
     });
 };
 
@@ -969,17 +842,6 @@ function bergerAndShor(graph) {
             removeVertex('largestDegree', graph, largestDegreeVertex);
         }
     }
-
-    for (var currentEdge = 0; currentEdge < graph.edges.length; currentEdge++) {
-        if (graph.edges[currentEdge].falseFasEdge) {
-            var tmpEdge = jQuery.extend(true, {}, graph.edges[currentEdge]);
-            graph.edges.splice(currentEdge, 1);
-            notFas.push(tmpEdge);
-            currentEdge--;
-        }
-
-    }
-
     return [notFas, graph.edges];
 
 };
@@ -1161,7 +1023,7 @@ function removeAllNeighbors(graph) {
     });
 };
 /****************************** Longest-path algrithm ************************************************/
-function longestPath(graph) {
+function clusticLongestPath(graph) {
     var alreadyPicked = [],
         layering = [],
         currentLayerVertices = [],
@@ -1210,24 +1072,20 @@ function longestPath(graph) {
 }
 
 function checkMostEdgesInPreviousLayer(graph, previousLayer) {
-    var maxVertex = undefined,
-        max = 0;
+    var maxVertex = undefined;
+    var max = 0;
 
     for (var index = 0; index < graph.vertices.length; index++) {
 
-        var currentVertex = graph.vertices[index],
-            currentVertexOutgoingEdges = graph.adjacencyList[currentVertex.number].neighborsOut,
-            currentMaxCount = 0;
+        var currentVertex = graph.vertices[index];
+        var currentVertexOutgoingEdges = graph.adjacencyList[currentVertex.number].neighborsOut;
+        var currentMaxCount = 0;
 
         //Select vertex with most outgoing edges in the previous layer
-        $.each(currentVertexOutgoingEdges, function ()
-        {
+        $.each(currentVertexOutgoingEdges, function () {
             var tmpVertex = this;
-
-            $.each(previousLayer, function ()
-            {
-                if (this.label === tmpVertex[0]) 
-                {
+            $.each(previousLayer, function () {
+                if (this.label === tmpVertex[0]) {
                     currentMaxCount++;
                 }
             });
@@ -1436,7 +1294,7 @@ function updateAdjacencyList(graph, from, to) {
 /****************************** End of proper layering **********************************************/
 
 /****************************** Edge crossing minimization ******************************************/
-function edgeCrossingMinimization(graph) {
+function clusticEdgeCrossingMinimization(graph) {
     setWithinLayerXCoordinate(graph);
 
     //Until convergence to some value
@@ -1545,7 +1403,7 @@ function sortingOnBarycenter(a, b) {
 /****************************** End of edge crossing minimization ***********************************/
 
 /****************************** Edge Straightening *************************************************/
-function edgeStraightening(graph) {
+function clusticEdgeStraightening(graph) {
     //Set x-coordinate of all vertices in the graph
     setWithinLayerXCoordinate(graph);
 

@@ -674,7 +674,7 @@
     <Content Include="Scripts\jsPlumb-master\tests\test-support-jquery.js" />
     <Content Include="Scripts\jsPlumb-master\todo.txt" />
     <Content Include="Scripts\modernizr-2.6.2.js" />
-    <Content Include="Scripts\secondTry.js" />
+    <Content Include="Scripts\Sugiyama.js" />
     <Content Include="Scripts\WebForms\DetailsView.js" />
     <Content Include="Scripts\WebForms\Focus.js" />
     <Content Include="Scripts\WebForms\GridView.js" />
