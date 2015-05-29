@@ -674,6 +674,10 @@ a:active {
     opacity:0.9;
     filter:alpha(opacity=90);
 }
+ 
+.cluster{
+    border: 3px solid #7AB02C;
+}
 
 .dummy{
     height:0px;

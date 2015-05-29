@@ -18,20 +18,24 @@
     var dummies = true;
 
     //Start by extracting subgraphs and create their positioning within the subgraph
-    var subgraphs = extractAndCreateSubGraphs();
+    var highestVertexNumber = {highestNumber : 0};
+
+    var subgraphs = extractAndCreateSubGraphs(highestVertexNumber);
 
     //Add all of the subgraphs to a array of layered subgraphs
     var subLayouts = {},
         subgraphKeys = Object.keys(subgraphs);
 
+    
+
     for (var i = 1; i < subgraphKeys.length; i++) {
-        subLayouts[subgraphKeys[i]] = constructGraph(subgraphs[subgraphKeys[i]].vertices, subgraphs[subgraphKeys[i]].edges, subgraphs[subgraphKeys[i]].numberOfOriginalVertices, dummies);
+        subLayouts[subgraphKeys[i]] = constructGraph(subgraphs[subgraphKeys[i]].vertices, subgraphs[subgraphKeys[i]].edges, highestVertexNumber, dummies);
     }
 
     //Change and store all the values of each subgraph so that the normal layering algorithm can be used
     changeAndStoreSubgraphValues(subLayouts, subgraphKeys);
 
-    var graph = constructClusticGraph(dummies,subgraphs,subLayouts,subgraphKeys);
+    var graph = constructClusticGraph(dummies, subgraphs, subLayouts, subgraphKeys, highestVertexNumber);
 
     for (var i = 0; i < graph.vertices.length; i++) {
 
@@ -43,6 +47,8 @@
 
     //draw vertices
     createVertices(graph.vertices);
+
+    //createClusterVertices(graph.subgraphs.cluster2.vertices);
 
     //draw edges
     createEdges(graph.edges);
@@ -74,6 +80,8 @@ function createVertices(vertices) {
             tempVertex.empty();
             dummyAllignment = 20;
         }
+        if (this.cluster !== undefined)
+            tempVertex.addClass('cluster');
 
         //Set appropriate coordinates of vertex
         tempVertex.css({
@@ -85,6 +93,39 @@ function createVertices(vertices) {
         jsPlumb.setIdChanged(this.label, this.label);
     });
 };
+
+function createClusterVertices(vertices) {
+
+    //For each vertice in the graph
+    $.each(vertices, function () {
+
+        var dummyAllignment = 0;
+
+        //create vertex and append it to drawing area
+        var tempVertex = jQuery('<div/>', {
+            id: this.label,
+            text: this.label
+        }).appendTo('#drawing-area');
+
+        //add vertex-class
+        tempVertex.addClass('component');
+
+        if (this.dummy) {
+            tempVertex.addClass('dummy');
+            tempVertex.empty();
+            dummyAllignment = 20;
+        }
+        if (this.cluster !== undefined)
+            tempVertex.addClass('cluster');
+
+        //Set appropriate coordinates of vertex
+        tempVertex.css({
+            'left': ((this.clusterxCoordinate+2) * 100) + dummyAllignment,
+            'top': this.clusterLayer * 100
+        });
+    });
+};
+
 
 //Create and draw all edges in the graph
 function createEdges(edges) {
@@ -120,11 +161,12 @@ function createEdges(edges) {
     });
 };
 
-function extractAndCreateSubGraphs() {
+function extractAndCreateSubGraphs(highestVertexNumber) {
     var vertices = getTestClusterVertices(),
-        edges = getTestEdges(),
-        numberOfOriginalVertices = vertices.length,
-        subgraphs = { remaining: { vertices: [], edges: [], numberOfOriginalVertices: numberOfOriginalVertices } };
+        edges = getTestEdges();
+
+    highestVertexNumber.highestNumber = (getHighestVerticeNumber(highestVertexNumber ,vertices.length));
+    var subgraphs = { remaining: { vertices: [], edges: [], numberOfOriginalVertices: highestVertexNumber} };
 
 
     $.each(vertices, function () {
@@ -132,7 +174,7 @@ function extractAndCreateSubGraphs() {
         if (this.cluster !== undefined) {
 
             if (subgraphs[this.cluster] === undefined) {
-                subgraphs[this.cluster] = { vertices: [this], edges: [], numberOfOriginalVertices: numberOfOriginalVertices };
+                subgraphs[this.cluster] = { vertices: [this], edges: [], numberOfOriginalVertices: highestVertexNumber };
             }
 
             else if (subgraphs[this.cluster] !== undefined) {
@@ -288,9 +330,9 @@ function getTestEdges() {
     var edge21 = { "to": "node4", "from": "node8" };
     var edge22 = { "to": "node7", "from": "node1" };
     //return [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
-    //return [edge0, edge1, edge2, edge3, edge20, edge21, edge4, edge5, edge6, edge7, edge8, edge9, edge19, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
+    return [edge0, edge1, edge2, edge3, edge20, edge21, edge4, edge5, edge6, edge7, edge8, edge9, edge19, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
     //return [edge3, edge4, edge7,edge15,edge20,edge21, edge9, edge10, edge12, edge13, edge14];
-    return [edge0, edge1, edge2,edge19,edge20, edge3, edge4, edge5, edge6,edge8, edge7, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
+    //return [edge0, edge1, edge2,edge19,edge20, edge3, edge4, edge5, edge6,edge8, edge7, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
 };
 
 function getTestVertices() {
@@ -314,15 +356,15 @@ function getTestVertices() {
 function getTestClusterVertices() {
 
     var node0 = { "label": "node0" }
-    var node1 = { "label": "node1", cluster: 'cluster2' }
-    var node2 = { "label": "node2" }
-    var node3 = { "label": "node3", cluster: 'cluster2' }
-    var node4 = { "label": "node4"}
-    var node5 = { "label": "node5", cluster: 'cluster2' }
+    var node1 = { "label": "node1"}
+    var node2 = { "label": "node2"}
+    var node3 = { "label": "node3"}
+    var node4 = { "label": "node4", staticToVertex: { to: 'node2', yAxis: 'below' }}
+    var node5 = { "label": "node5" }
     var node6 = { "label": "node6"}
     var node7 = { "label": "node7"}
     var node8 = { "label": "node8"}
-    var node9 = { "label": "node9" }
+    var node9 = { "label": "node9" } 
     var node10 = { "label": "node10" }
     var node11 = { "label": "node11" }
 
@@ -403,9 +445,65 @@ function getNyAnstalldEdges() {
 
 };
 
+/************************ CLuster breathing phase ************************************/
+
+function inhaleCluster(graph) {
+
+    $.each(graph.subgraphs,function()
+    {
+        
+        var collapsedCluster = {},
+        collapsedVertices = [],
+        collapsedEdges = [],
+        originalVertices = [];
+
+        $.each(this.layering,function()
+        {
+
+            var collapsedClusterLayer = createDummyVertex(graph);
+            collapsedClusterLayer['originalVerticesInCluster'] = [];
+
+            for (var i = 0; i < this.length; i++)
+            {
+                var originalVertex = $.extend(true, {}, this);
+
+                collapsedClusterLayer['originalVerticesInCluster'].push(originalVertex);
+
+
+            }
+
+            
+            
+            if(originalVertices[originalVertex.layer] === undefined)
+            {
+                originalVertices[originalVertex.layer] = [originalVertex];
+            }
+            else
+            {
+                originalVertices[originalVertex.layer].push(originalVertex);
+            }
+
+            
+
+        });
+
+    });
+
+    cluster['inhaledCluster'] = collapsedCluster;
+
+
+    return graph;
+};
+
+function exhaleCluster(graph) {
+
+};
+
+/************************ End of cluster breathing phase *****************************/
+
 /************************ Graph construction start ***********************************/
-function constructGraph(vertices, edges, numberOfOriginalVertices, dummies) {
-    var graph = { vertices: [], edges: [], adjacencyList: [], numberOfOriginalVertices: numberOfOriginalVertices };
+function constructGraph(vertices, edges, highestNumberVertex, dummies) {
+    var graph = { vertices: [], edges: [], adjacencyList: [], numberOfOriginalVertices: highestNumberVertex };
 
     graph.edges = edges;
     graph.vertices = vertices;
@@ -459,7 +557,7 @@ function constructGraph(vertices, edges, numberOfOriginalVertices, dummies) {
     reIntroduceStaticConstraintsVertices(graph, verticesUnderConstraints, 'y');
 
     //Step 2.3 - Make proper layering
-    var removedOriginalEdges = makeProperLayering(graph);
+    var removedOriginalEdges = makeProperLayering(graph );
 
     //Step 2.4 - Remove leftover edges in the graph
     removeAllNeighbors(graph);
@@ -506,7 +604,7 @@ function constructGraph(vertices, edges, numberOfOriginalVertices, dummies) {
     }
 
 
-    $.merge(graph.edges, removedOriginalEdges);
+    //$.merge(graph.edges, removedOriginalEdges);
 
     //Step 5.3 - Reverse fas edges back to original direction
     removeDuplicateEdges(graph.edges)
@@ -515,8 +613,8 @@ function constructGraph(vertices, edges, numberOfOriginalVertices, dummies) {
 
     //Step 5.4 - Add all two loop, self loop edges and all edges replacing dummy edges back to the edge set
     graph['fas'] = fas[1];
-    $.merge(graph.edges, twoLoopEdges);
-    $.merge(graph.edges, selfLoopEdges);
+    graph['twoLoops'] = twoLoopEdges;
+    graph['selfLoops'] = selfLoopEdges;
     //removeDuplicateEdges(dummyVerticesAndEdges[2])
     //$.merge(graph.edges, dummyVerticesAndEdges[2]);
 
@@ -527,8 +625,8 @@ function constructGraph(vertices, edges, numberOfOriginalVertices, dummies) {
 /************************ Graph construction end **************************************/
 
 /************************ CluStic Graph construction start ***********************************/
-function constructClusticGraph(dummies,subgraphs,sublayouts,subgraphKeys) {
-    var graph = { vertices: [], edges: [], adjacencyList: [], numberOfOriginalVertices: subgraphs.remaining.numberOfOriginalVertices };
+function constructClusticGraph(dummies, subgraphs, sublayouts, subgraphKeys, highestNumberVertex) {
+    var graph = { vertices: [], edges: [], adjacencyList: [], numberOfOriginalVertices: highestNumberVertex };
 
     graph.edges = subgraphs.remaining.edges;
     graph.vertices = subgraphs.remaining.vertices;
@@ -559,7 +657,6 @@ function constructClusticGraph(dummies,subgraphs,sublayouts,subgraphKeys) {
     reverseEdgesInFas(fas[1]);
 
     
-
     //Step 1.2 - Update graph with new structure
     var newEdges = $.merge(fas[0], fas[1]);
     graph.edges = newEdges;
@@ -589,7 +686,8 @@ function constructClusticGraph(dummies,subgraphs,sublayouts,subgraphKeys) {
 
 
     //Step 2.3 - Make proper layering
-    var removedOriginalEdges = makeProperLayering(graph);
+    var type = 'clustic';
+    var removedOriginalEdges = makeProperLayering(graph,type);
 
     //Step 2.4 - Remove leftover edges in the graph
     removeAllNeighbors(graph);
@@ -644,8 +742,9 @@ function constructClusticGraph(dummies,subgraphs,sublayouts,subgraphKeys) {
     //Merge all fa sets original sets
     $.each(graph.subgraphs, function () {
         $.merge(fas[1], this.fas);
+        $.merge(twoLoopEdges, this.twoLoops);
+        $.merge(selfLoopEdges, this.selfLoops);
     });
-
 
     var reversedFas = reverseEdgesInFas(fas[1]);
     $.merge(graph.edges, fas[1]);
@@ -867,15 +966,22 @@ function removeAndStoreTwoLoops(graph) {
 function isFurthestFromSource(graph, from, to) {
     var source = getSources([], graph);
 
-    if (graph.distanceMatrix[source[0].label][from.label] > graph.distanceMatrix[source[0].label][to.label])
+    if (source[0] !== undefined && graph.distanceMatrix[source[0].label][from.label] > graph.distanceMatrix[source[0].label][to.label])
         return true;
+    else{
+        var fromNumber = from.label.substring(4, from.label.length),
+            toNumber = to.label.substring(4, to.label.length);
+
+        if (fromNumber > toNumber)
+            return true;
+    }
 
     return false;
 }
 
 //Check if the removal of this edge create a new source or sink 
 function checksCreatedSourceOrSink(graph, to, from, currentEdge) {
-    if (graph.adjacencyList[from.number].neighborsOut.length < 2 || graph.adjacencyList[to.number].neighborsIn.length < 2)
+    if (graph.adjacencyList[from.number].neighborsOut.length < 1 || graph.adjacencyList[to.number].neighborsIn.length < 1)
         return true;
     return false;
 };
@@ -1173,8 +1279,11 @@ function reverseEdgesInFas(edges) {
     });
 }
 
-function getHighestVerticeNumber(graph) {
-    return (graph.vertices.length > graph.numberOfOriginalVertices) ? graph.vertices.length : graph.numberOfOriginalVertices;
+function getHighestVerticeNumber(highestVertexNumber,value) {
+    if (value !== undefined)
+        highestVertexNumber.highestNumber = value;
+
+    return highestVertexNumber.highestNumber++;
 };
 
 function getHighestEdgeLabel(graph) {
@@ -1476,7 +1585,7 @@ function getPositionWithinLayer(graph, searchVertex) {
 /****************************** End of longest path   ************************************************/
 
 /****************************** Proper layering *****************************************************/
-function makeProperLayering(graph) {
+function makeProperLayering(graph, type, highestNumberVertex) {
     var oldEdges = [];
 
     for (var index = 0; index < graph.edges.length; index++) {
@@ -1494,13 +1603,20 @@ function makeProperLayering(graph) {
         if (currentEdge.dummies)
             delete currentEdge.dummies;
 
+        var direction;
+        if ((from.layer - to.layer) > 0)
+            direction = 'down';
+        else if (from.layer - to.layer < 0)
+            direction = 'up';
+
         var span = Math.abs(from.layer - to.layer);
+
         if (span > 1) {
             for (var index1 = 0; index1 < span - 1; index1++) {
                 if (index1 === 0)
-                    dummyVertices.push(createDummyVertex(graph, from));
+                    dummyVertices.push(createDummyVertex(graph, from,type,graph.numberOfOriginalVertices,direction));
                 else
-                    dummyVertices.push(createDummyVertex(graph, dummyVertices[index1 - 1]));
+                    dummyVertices.push(createDummyVertex(graph, dummyVertices[index1 - 1], type, graph.numberOfOriginalVertices,direction));
             };
 
             for (var index2 = 0; index2 < span; index2++) {
@@ -1535,21 +1651,30 @@ function makeProperLayering(graph) {
     return oldEdges;
 };
 
-function createDummyVertex(graph, fromParent) {
+function createDummyVertex(graph, fromParent, type,highestNumberVertex,direction) {
     var newDummyVertex = {};
-    newDummyVertex['label'] = 'node' + getHighestVerticeNumber(graph);
-    newDummyVertex['number'] = getHighestVerticeNumber(graph);
-    if (fromParent.layer === 0) {
+    var highestVertexNumberTmp = getHighestVerticeNumber(highestNumberVertex);
+    newDummyVertex['label'] = 'node' + highestVertexNumberTmp;
+    newDummyVertex['number'] = highestVertexNumberTmp;
+    if (direction === 'down' && fromParent.layer === 0)
+    {
         newDummyVertex['layer'] = 0;
         graph.layering.splice(0, 0, []);
         $.each(graph.vertices, function () {
             this.layer++;
         });
-    } else {
+    }
+    else if (direction === 'down')
+    {
         newDummyVertex['layer'] = fromParent.layer - 1;
     }
+    else if (direction === 'up')
+    {
+        newDummyVertex['layer'] = fromParent.layer + 1;
+    }
 
-    if (fromParent.cluster !== undefined)
+
+    if (fromParent.cluster !== undefined && type !== 'clustic')
         newDummyVertex['cluster'] = fromParent.cluster;
     newDummyVertex['dummy'] = true;
     graph.vertices.push(newDummyVertex);
