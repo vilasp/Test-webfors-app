@@ -48,7 +48,7 @@
     //draw vertices
     createVertices(graph.vertices);
 
-    //createClusterVertices(graph.subgraphs.cluster2.vertices);
+    createClusterVertices(graph.subgraphs.cluster1.vertices);
 
     //draw edges
     createEdges(graph.edges);
@@ -330,9 +330,9 @@ function getTestEdges() {
     var edge21 = { "to": "node4", "from": "node8" };
     var edge22 = { "to": "node7", "from": "node1" };
     //return [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
-    return [edge0, edge1, edge2, edge3, edge20, edge21, edge4, edge5, edge6, edge7, edge8, edge9, edge19, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
+    //return [edge0, edge1, edge2, edge3, edge20, edge21, edge4, edge5, edge6, edge7, edge8, edge9, edge19, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
     //return [edge3, edge4, edge7,edge15,edge20,edge21, edge9, edge10, edge12, edge13, edge14];
-    //return [edge0, edge1, edge2,edge19,edge20, edge3, edge4, edge5, edge6,edge8, edge7, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
+    return [edge0, edge1, edge2,edge19,edge20,edge22, edge3, edge4, edge5, edge6,edge8, edge7, edge9, edge10, edge11, edge12, edge18, edge14, edge15, edge16, edge17, edge13];
 };
 
 function getTestVertices() {
@@ -358,16 +358,17 @@ function getTestClusterVertices() {
     var node0 = { "label": "node0" }
     var node1 = { "label": "node1"}
     var node2 = { "label": "node2"}
-    var node3 = { "label": "node3"}
-    var node4 = { "label": "node4", staticToVertex: { to: 'node2', yAxis: 'below' }}
-    var node5 = { "label": "node5" }
-    var node6 = { "label": "node6"}
-    var node7 = { "label": "node7"}
-    var node8 = { "label": "node8"}
-    var node9 = { "label": "node9" } 
+    var node3 = { "label": "node3", cluster : 'cluster2'}
+    var node4 = { "label": "node4", cluster: 'cluster1' }
+    var node5 = { "label": "node5", cluster: 'cluster2' }
+    var node6 = { "label": "node6", cluster: 'cluster1' }
+    var node7 = { "label": "node7", cluster: 'cluster2' }
+    var node8 = { "label": "node8", cluster: 'cluster1' }
+    var node9 = { "label": "node9", cluster: 'cluster1' }
     var node10 = { "label": "node10" }
     var node11 = { "label": "node11" }
 
+    //, staticToVertex: { to: 'node2', yAxis: 'below' }
     return [node0, node1, node2, node3, node4, node5, node6, node7, node8, node9, node10, node11];
     //return[node2,node4, node6,node9,node8,node10];
 };
@@ -447,52 +448,109 @@ function getNyAnstalldEdges() {
 
 /************************ CLuster breathing phase ************************************/
 
-function inhaleCluster(graph) {
+function inhale(graph) {
 
     $.each(graph.subgraphs,function()
     {
         
-        var collapsedCluster = {},
-        collapsedVertices = [],
-        collapsedEdges = [],
-        originalVertices = [];
+        var collapsedCluster = {collapsedVertices : [], collapsedEdges : []},
+            currentLayer = 0,
+            currentCluster = this;
 
         $.each(this.layering,function()
         {
 
-            var collapsedClusterLayer = createDummyVertex(graph);
-            collapsedClusterLayer['originalVerticesInCluster'] = [];
-
-            for (var i = 0; i < this.length; i++)
+            if (this.length > 1 )
             {
-                var originalVertex = $.extend(true, {}, this);
+                var tmpParent = { layer: currentLayer + 1, cluster : this[0].cluster },
+                    type = 'nonClustic',
+                    direction = 'down';
+                var collapsedClusterLayer = createDummyVertex(currentCluster, tmpParent, type, graph.numberOfOriginalVertices, direction);
+                    currentCluster.layering[currentLayer].splice(currentCluster.layering[currentLayer].length-1, 1);
+                    collapsedClusterLayer['originalVerticesInCluster'] = [];
+                    collapsedClusterLayer.dummy = false;
+                    
 
-                collapsedClusterLayer['originalVerticesInCluster'].push(originalVertex);
+                for (var i = 0; i < this.length; i++) {
+                    var originalVertex = $.extend(true, {}, this[i]);
+
+                    collapsedClusterLayer['clusterLayer'] = originalVertex.clusterLayer;
+                    collapsedClusterLayer['clusterLayerX'] = originalVertex.clusterLayerX;
+                    collapsedClusterLayer['clusterxCoordinate'] = originalVertex.clusterxCoordinate;
 
 
-            }
+                    collapsedClusterLayer['originalVerticesInCluster'].push(originalVertex);
 
-            
-            
-            if(originalVertices[originalVertex.layer] === undefined)
-            {
-                originalVertices[originalVertex.layer] = [originalVertex];
+                    for(var j = 0; j < graph.edges.length; j++)
+                    {
+                        var tmpEdge = undefined,
+                            currentEdge = graph.edges[j];
+                       
+
+                        if (currentEdge.from === originalVertex.label)
+                        {
+                            tmpEdge = createDummyEdge(graph, { label: collapsedClusterLayer.label }, { label: currentEdge.to })
+                        }
+                        else if (currentEdge.to === originalVertex.label)
+                        {
+                            tmpEdge = createDummyEdge(graph, { label: currentEdge.from }, { label: collapsedClusterLayer.label })
+                        }
+                        if(tmpEdge !== undefined)
+                        {
+
+                            var originalEdge = $.extend(true, {}, graph.edges[j]),
+                                firstTmpEdge = collapsedEdgeAlreadyExists(collapsedCluster.collapsedEdges ,tmpEdge);
+
+                            graph.edges.splice(graph.edges.length - 1, 1);
+                            graph.edges.splice(j, 1);
+                            j--;
+
+
+                            if (firstTmpEdge !== undefined)
+                            {
+                                firstTmpEdge.originalEdges.push(originalEdge);
+                            }
+                            else
+                            {
+                                tmpEdge['originalEdges'] = [originalEdge];
+                                collapsedCluster.collapsedEdges.push(tmpEdge);
+                            }
+                        }
+                    }
+                    
+                    
+                }
+
+                currentCluster.layering[currentLayer] = [collapsedClusterLayer];
+                collapsedCluster.collapsedVertices.push(collapsedClusterLayer);
             }
             else
             {
-                originalVertices[originalVertex.layer].push(originalVertex);
+                collapsedCluster.collapsedVertices.push(this[0]);
             }
-
             
+            currentLayer++;
 
         });
 
+        this.vertices = collapsedCluster.collapsedVertices;
+        this.edges = collapsedCluster.collapsedEdges;
+
     });
 
-    cluster['inhaledCluster'] = collapsedCluster;
-
-
     return graph;
+};
+
+function collapsedEdgeAlreadyExists(collapsedEdges,edge) {
+
+    findEdge = undefined;
+
+    $.each(collapsedEdges, function () {
+        if (this.from === edge.from && this.to === edge.to)
+            findEdge = this;
+    });
+
+    return findEdge;
 };
 
 function exhaleCluster(graph) {
@@ -632,6 +690,12 @@ function constructClusticGraph(dummies, subgraphs, sublayouts, subgraphKeys, hig
     graph.vertices = subgraphs.remaining.vertices;
     graph.subgraphs = sublayouts;
 
+    $.each(graph.subgraphs, function () {
+        $.merge(graph.edges, this.edges);
+        $.merge(graph.vertices, this.vertices);
+    });
+
+
     //Assign labels to each node and init adjacency lists
     assigningVertexAndLabelNumber(graph);
 
@@ -662,8 +726,18 @@ function constructClusticGraph(dummies, subgraphs, sublayouts, subgraphKeys, hig
     graph.edges = newEdges;
     graph.adjacencyList = [];
 
+    for (var i = 0; i < graph.vertices.length; i++) {
+        if (graph.vertices[i].cluster !== undefined) {
+            graph.vertices.splice(i, 1);
+            i--;
+        }
+    }
+
+    //Perfrom the inhale step of the breating phase
+    inhale(graph)
+
     //Merge all vertices and edges from subgraphs with the original sets
-    $.each(graph.subgraphs,function(){
+    $.each(graph.subgraphs, function () {
         $.merge(graph.vertices, this.vertices);
         $.merge(graph.edges, this.edges);
     });
@@ -1283,7 +1357,9 @@ function getHighestVerticeNumber(highestVertexNumber,value) {
     if (value !== undefined)
         highestVertexNumber.highestNumber = value;
 
-    return highestVertexNumber.highestNumber++;
+    highestVertexNumber.highestNumber++;
+
+    return highestVertexNumber.highestNumber;
 };
 
 function getHighestEdgeLabel(graph) {
@@ -1840,9 +1916,11 @@ function setPriority(graph, currentLayer, type) {
         var currentVertex = graph.layering[currentLayer][position];
         if (type === 'downToUp') {
             (currentVertex.dummy) ? currentVertex['priority'] = 20000 : currentVertex['priority'] = graph.adjacencyList[currentVertex.number].neighborsOut.length;
+            (currentVertex.cluster !== undefined ? currentVertex['priority'] = 40000 : currentVertex.priority);
         }
         else if (type === 'upToDown') {
             (currentVertex.dummy) ? currentVertex['priority'] = 20000 : currentVertex['priority'] = graph.adjacencyList[currentVertex.number].neighborsIn.length;
+            (currentVertex.cluster !== undefined ? currentVertex['priority'] = 40000 : currentVertex.priority);
         }
     };
 };
