@@ -20,7 +20,22 @@
     //Start by extracting subgraphs and create their positioning within the subgraph
     var highestVertexNumber = {highestNumber : 0};
 
-    var subgraphs = extractAndCreateSubGraphs(highestVertexNumber);
+    //var vertices = getTestVertices();
+    //var edges = getTestEdges();
+
+    //var vertices = getNyAnstalldVertices();
+    //var edges = getNyAnstalldEdges();
+
+   // var vertices = getEfterAffarVertices();
+    //var edges = getEfterAffarEdges();
+
+    //var vertices = getVardeBevakarenVertices();
+    //var edges = getVardeBevakarenEdges();
+
+    var vertices = getSlutPrisPrenumerationVertices();
+    var edges = getSlutPrisPrenumerationEdges();
+
+    var subgraphs = extractAndCreateSubGraphs(vertices,edges,highestVertexNumber);
 
     //Add all of the subgraphs to a array of layered subgraphs
     var subLayouts = {},
@@ -48,7 +63,7 @@
     //draw vertices
     createVertices(graph.vertices);
 
-    createClusterVertices(graph.subgraphs.cluster1.vertices);
+    //createClusterVertices(graph.subgraphs.cluster1.vertices);
 
     //draw edges
     createEdges(graph.edges);
@@ -72,6 +87,9 @@ function createVertices(vertices) {
             text: this.label
         }).appendTo('#drawing-area');
 
+        if (this.markNode)
+            tempVertex.addClass('marked');
+
         //add vertex-class
         tempVertex.addClass('component');
 
@@ -85,8 +103,8 @@ function createVertices(vertices) {
 
         //Set appropriate coordinates of vertex
         tempVertex.css({
-            'left': ((this.xCoordinate+4) * 100) + dummyAllignment,
-            'top': this.layer * 100
+            'left': ((this.xCoordinate) * 50) + dummyAllignment,
+            'top': this.layer * 60
         });
 
         //Update references in jsPlumb
@@ -156,14 +174,14 @@ function createEdges(edges) {
             });
 
             if (!$('#' + this.to).hasClass('dummy'))
-                edge.addOverlay(["Arrow", { width: 12, length: 12, location: 1 }]);
+                edge.addOverlay(["Arrow", { width: 5, length: 5, location: 1 }]);
         }
     });
 };
 
-function extractAndCreateSubGraphs(highestVertexNumber) {
-    var vertices = getTestClusterVertices(),
-        edges = getTestEdges();
+function extractAndCreateSubGraphs(vertices,edges,highestVertexNumber) {
+    var vertices = vertices,
+        edges = edges;
 
     highestVertexNumber.highestNumber = (getHighestVerticeNumber(highestVertexNumber ,vertices.length));
     var subgraphs = { remaining: { vertices: [], edges: [], numberOfOriginalVertices: highestVertexNumber} };
@@ -337,7 +355,7 @@ function getTestEdges() {
 
 function getTestVertices() {
 
-    var node0 = { "label": "node0" }
+    var node0 = { "label": "node0", markNode: true }
     var node1 = { "label": "node1" }
     var node2 = { "label": "node2" }
     var node3 = { "label": "node3" }
@@ -348,7 +366,7 @@ function getTestVertices() {
     var node8 = { "label": "node8" }
     var node9 = { "label": "node9" }
     var node10 = { "label": "node10" }
-    var node11 = { "label": "node11" }
+    var node11 = { "label": "node11", markNode: true }
 
     return [node0, node1, node2, node3, node4, node5, node6, node7, node8, node9, node10, node11];
 };
@@ -374,7 +392,7 @@ function getTestClusterVertices() {
 };
 
 function getNyAnstalldVertices() {
-    var node0 = { "label": "node0" }
+    var node0 = { "label": "node0", markNode: true }
     var node1 = { "label": "node1" }
     var node2 = { "label": "node2" }
     var node3 = { "label": "node3" }
@@ -397,7 +415,7 @@ function getNyAnstalldVertices() {
     var node20 = { "label": "node20" }
     var node21 = { "label": "node21" }
     var node22 = { "label": "node22" }
-    var node23 = { "label": "node23" }
+    var node23 = { "label": "node23", markNode: true }
 
     return [node0, node1, node2, node3, node4, node5, node6, node7, node8, node9, node10, node11, node12, node13, node14, node15, node16, node17, node18, node19, node20, node21, node22, node23];
 };
@@ -446,6 +464,226 @@ function getNyAnstalldEdges() {
 
 };
 
+function getEfterAffarVertices() {
+    var node0 = { "label": "node0", markNode: true }
+    var node1 = { "label": "node1" }
+    var node2 = { "label": "node2" }
+    var node3 = { "label": "node3" }
+    var node4 = { "label": "node4" }
+    var node5 = { "label": "node5" }
+    var node6 = { "label": "node6" }
+    var node7 = { "label": "node7" }
+    var node8 = { "label": "node8" }
+    var node9 = { "label": "node9" }
+    var node10 = { "label": "node10" }
+    var node11 = { "label": "node11" }
+    var node12 = { "label": "node12" }
+    var node13 = { "label": "node13" }
+    var node14 = { "label": "node14" }
+    var node15 = { "label": "node15" }
+    var node16 = { "label": "node16", markNode: true }
+    var node17 = { "label": "node17" }
+    var node18 = { "label": "node18" }
+    var node19 = { "label": "node19" }
+    var node20 = { "label": "node20" }
+    var node21 = { "label": "node21" }
+    var node22 = { "label": "node22" }
+    var node23 = { "label": "node23" }
+    var node24 = { "label": "node24" }
+    var node25 = { "label": "node25" }
+    var node26 = { "label": "node26" }
+    var node27 = { "label": "node27" }
+    var node28 = { "label": "node28" }
+    var node29 = { "label": "node29" }
+
+
+    return [node0, node1, node2, node3, node4, node5, node6, node7, node8, node9, node10, node11, node12, node13, node14, node15, node16, node17, node18, node19, node20, node21, node22, node23, node24, node25, node26, node27, node28, node29];
+};
+
+function getEfterAffarEdges() {
+    var edge0 = { "from": "node0", "to": "node1" };
+    var edge1 = { "from": "node0", "to": "node2" };
+    var edge2 = { "from": "node0", "to": "node3" };
+    var edge3 = { "from": "node1", "to": "node4" };
+    var edge4 = { "from": "node1", "to": "node13" };
+    var edge5 = { "from": "node2", "to": "node5" };
+    var edge6 = { "from": "node2", "to": "node14" };
+    var edge7 = { "from": "node3", "to": "node6" };
+    var edge8 = { "from": "node3", "to": "node22" };
+    var edge9 = { "from": "node4", "to": "node13" };
+    var edge10 = { "from": "node4", "to": "node7" };
+    var edge11 = { "from": "node5", "to": "node8" };
+    var edge12 = { "from": "node6", "to": "node22" };
+    var edge13 = { "from": "node6", "to": "node9" };
+    var edge14 = { "from": "node7", "to": "node13" };
+    var edge15 = { "from": "node7", "to": "node10" };
+    var edge16 = { "from": "node8", "to": "node14" };
+    var edge17 = { "from": "node8", "to": "node11" };
+    var edge18 = { "from": "node9", "to": "node22" };
+    var edge19 = { "from": "node9", "to": "node12" };
+    var edge20 = { "from": "node11", "to": "node14" };
+    var edge21 = { "from": "node12", "to": "node15" };
+    var edge22 = { "from": "node12", "to": "node17" };
+    var edge23 = { "from": "node13", "to": "node16" };
+    var edge24 = { "from": "node14", "to": "node16" };
+    var edge25 = { "from": "node15", "to": "node17" };
+    var edge26 = { "from": "node15", "to": "node18" };
+    var edge27 = { "from": "node17", "to": "node22" };
+    var edge28 = { "from": "node18", "to": "node19" };
+    var edge29 = { "from": "node18", "to": "node20" };
+    var edge30 = { "from": "node18", "to": "node21" };
+    var edge31 = { "from": "node19", "to": "node22" };
+    var edge32 = { "from": "node20", "to": "node19" };
+    var edge33 = { "from": "node20", "to": "node17" };
+    var edge34 = { "from": "node20", "to": "node23" };
+    var edge35 = { "from": "node21", "to": "node18" };
+    var edge36 = { "from": "node22", "to": "node16" };
+    var edge37 = { "from": "node23", "to": "node17" };
+    var edge38 = { "from": "node23", "to": "node24" };
+    var edge39 = { "from": "node24", "to": "node19" };
+    var edge40 = { "from": "node24", "to": "node25" };
+    var edge41 = { "from": "node24", "to": "node26" };
+    var edge42 = { "from": "node25", "to": "node24" };
+    var edge43 = { "from": "node26", "to": "node17" };
+    var edge44 = { "from": "node26", "to": "node27" };
+    var edge45 = { "from": "node27", "to": "node17" };
+    var edge46 = { "from": "node27", "to": "node28" };
+    var edge47 = { "from": "node28", "to": "node29" };
+    var edge48 = { "from": "node28", "to": "node19" };
+    var edge49 = { "from": "node29", "to": "node28" };
+
+    return [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge13, edge14, edge15, edge16, edge17, edge18, edge19, edge20, edge21, edge22, edge23, edge24, edge25, edge26, edge27, edge28, edge29, edge30, edge31, edge32, edge33, edge34, edge35, edge36, edge37, edge38, edge39, edge40, edge41, edge42, edge43, edge44, edge45, edge46, edge47, edge48, edge49];
+
+};
+
+function getVardeBevakarenVertices() {
+    var node0 = { "label": "node0", markNode: true }
+    var node1 = { "label": "node1" }
+    var node2 = { "label": "node2" }
+    var node3 = { "label": "node3" }
+    var node4 = { "label": "node4" }
+    var node5 = { "label": "node5" }
+    var node6 = { "label": "node6" }
+    var node7 = { "label": "node7" }
+    var node8 = { "label": "node8" }
+    var node9 = { "label": "node9" }
+    var node10 = { "label": "node10" }
+    var node11 = { "label": "node11" }
+    var node12 = { "label": "node12" }
+    var node13 = { "label": "node13" }
+    var node14 = { "label": "node14" }
+    var node15 = { "label": "node15" }
+    var node16 = { "label": "node16" }
+    var node17 = { "label": "node17" }
+    var node18 = { "label": "node18" }
+    var node19 = { "label": "node19" }
+    var node20 = { "label": "node20" }
+    var node21 = { "label": "node21" }
+    var node22 = { "label": "node22" }
+    var node23 = { "label": "node23", markNode: true }
+
+
+    return [node0, node1, node2, node3, node4, node5, node6, node7, node8, node9, node10, node11, node12, node13, node14, node15, node16, node17, node18, node19, node20, node21, node22, node23];
+};
+
+function getVardeBevakarenEdges() {
+    var edge0 = { "from": "node0", "to": "node1" };
+    var edge1 = { "from": "node1", "to": "node1" };
+    var edge2 = { "from": "node1", "to": "node2" };
+    var edge3 = { "from": "node2", "to": "node3" };
+    var edge4 = { "from": "node2", "to": "node4" };
+    var edge5 = { "from": "node2", "to": "node23" };
+    var edge6 = { "from": "node3", "to": "node7" };
+    var edge7 = { "from": "node3", "to": "node23" };
+    var edge8 = { "from": "node4", "to": "node3" };
+    var edge9 = { "from": "node4", "to": "node5" };
+    var edge10 = { "from": "node5", "to": "node3" };
+    var edge11 = { "from": "node5", "to": "node6" };
+    var edge12 = { "from": "node6", "to": "node3" };
+    var edge13 = { "from": "node7", "to": "node23" };
+    var edge14 = { "from": "node7", "to": "node8" };
+    var edge15 = { "from": "node8", "to": "node23" };
+    var edge16 = { "from": "node8", "to": "node22" };
+    var edge17 = { "from": "node8", "to": "node9" };
+    var edge40 = { "from": "node9", "to": "node10" };
+    var edge18 = { "from": "node9", "to": "node12" };
+    var edge19 = { "from": "node10", "to": "node12" };
+    var edge20 = { "from": "node10", "to": "node11" };
+    var edge21 = { "from": "node11", "to": "node12" };
+    var edge22 = { "from": "node12", "to": "node13" };
+    var edge23 = { "from": "node12", "to": "node23" };
+    var edge24 = { "from": "node13", "to": "node23" };
+    var edge25 = { "from": "node13", "to": "node14" };
+    var edge26 = { "from": "node14", "to": "node15" };
+    var edge27 = { "from": "node14", "to": "node20" };
+    var edge28 = { "from": "node15", "to": "node15" };
+    var edge29 = { "from": "node15", "to": "node16" };
+    var edge30 = { "from": "node16", "to": "node17" };
+    var edge31 = { "from": "node16", "to": "node3" };
+    var edge32 = { "from": "node17", "to": "node3" };
+    var edge33 = { "from": "node17", "to": "node18" };
+    var edge34 = { "from": "node18", "to": "node3" };
+    var edge35 = { "from": "node18", "to": "node19" };
+    var edge36 = { "from": "node19", "to": "node3" };
+    var edge37 = { "from": "node20", "to": "node21" };
+    var edge38 = { "from": "node20", "to": "node20" };
+    var edge39 = { "from": "node21", "to": "node3" };
+
+    return [edge0, edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12, edge13, edge14, edge15, edge16, edge17, edge18, edge19, edge20, edge21, edge22, edge23, edge24, edge25, edge26, edge27, edge28, edge29, edge30, edge31, edge32, edge33, edge34, edge35, edge36, edge37, edge38, edge39, edge40];
+
+};
+
+function getSlutPrisPrenumerationVertices() {
+    var node0 = { "label": "node0", markNode: true }
+    var node1 = { "label": "node1" }
+    var node2 = { "label": "node2", cluster: 'cluster1' }
+    var node3 = { "label": "node3" }
+    var node4 = { "label": "node4", cluster: 'cluster2' }
+    var node5 = { "label": "node5", cluster: 'cluster2' }
+    var node6 = { "label": "node6", cluster: 'cluster1' }
+    var node7 = { "label": "node7", markNode: true }
+    var node8 = { "label": "node8", cluster: 'cluster2' }
+    var node9 = { "label": "node9" ,cluster : 'cluster1'}
+    var node10 = { "label": "node10", cluster: 'cluster1' }
+    var node11 = { "label": "node11", cluster: 'cluster2' }
+    var node12 = { "label": "node12", cluster: 'cluster2' }
+    var node13 = { "label": "node13", cluster: 'cluster1' }
+    var node14 = { "label": "node14", cluster: 'cluster1' }
+
+
+    return [node0, node1, node2, node3, node4, node5, node6, node7, node8, node9, node10, node11, node12, node13, node14];
+};
+
+function getSlutPrisPrenumerationEdges() {
+    var edge0 = { "from": "node0", "to": "node1" };
+    var edge1 = { "from": "node1", "to": "node3" };
+    var edge2 = { "from": "node1", "to": "node4" };
+    var edge3 = { "from": "node2", "to": "node1" };
+    var edge4 = { "from": "node5", "to": "node1" };
+    var edge5 = { "from": "node2", "to": "node7" };
+    var edge6 = { "from": "node3", "to": "node6" };
+    var edge7 = { "from": "node3", "to": "node7" };
+    var edge8 = { "from": "node4", "to": "node7" };
+    var edge9 = { "from": "node4", "to": "node8" };
+    var edge10 = { "from": "node5", "to": "node7" };
+    var edge11 = { "from": "node6", "to": "node2" };
+    var edge12 = { "from": "node6", "to": "node9" };
+    var edge13 = { "from": "node6", "to": "node10" };
+    var edge14 = { "from": "node8", "to": "node11" };
+    var edge15 = { "from": "node8", "to": "node12" };
+    var edge16 = { "from": "node8", "to": "node5" };
+    var edge17 = { "from": "node9", "to": "node2" };
+    var edge18 = { "from": "node9", "to": "node13" };
+    var edge19 = { "from": "node10", "to": "node13" };
+    var edge20 = { "from": "node11", "to": "node5" };
+    var edge21 = { "from": "node12", "to": "node5" };
+    var edge22 = { "from": "node13", "to": "node2" };
+    var edge23 = { "from": "node13", "to": "node14" };
+    var edge24 = { "from": "node14", "to": "node2" };
+
+    return [edge0, edge4, edge10, edge1, edge2, edge3, edge5, edge6, edge7, edge8, edge9, edge11, edge12, edge13, edge14, edge15, edge17, edge18, edge19, edge20, edge21, edge22, edge23, edge24];
+
+};
 /************************ CLuster breathing phase ************************************/
 
 function inhale(graph) {
@@ -453,7 +691,7 @@ function inhale(graph) {
     $.each(graph.subgraphs,function()
     {
         
-        var collapsedCluster = {collapsedVertices : [], collapsedEdges : []},
+        var collapsedCluster = {collapsedVertices : [], collapsedEdges : [], originalEdges : [], originalVertices : []},
             currentLayer = 0,
             currentCluster = this;
 
@@ -505,20 +743,31 @@ function inhale(graph) {
                             graph.edges.splice(j, 1);
                             j--;
 
+                            tmpEdge['partOfCollapsedCluster'] = true;
+                            tmpEdge['originalEdge'] = originalEdge;
+                            tmpEdge['reversed'] = originalEdge.reversed;
 
-                            if (firstTmpEdge !== undefined)
-                            {
-                                firstTmpEdge.originalEdges.push(originalEdge);
-                            }
-                            else
-                            {
-                                tmpEdge['originalEdges'] = [originalEdge];
+                            collapsedCluster.originalEdges.push(originalEdge);
+
+                            if (firstTmpEdge === undefined) {
                                 collapsedCluster.collapsedEdges.push(tmpEdge);
+                                graph.edges.push(tmpEdge);
                             }
+                                
+
+                            var numberVericesInCluster = 0;
+
+                            $.each(currentCluster.vertices, function () {
+                                if (this.label === tmpEdge.to || this.label === tmpEdge.from)
+                                    numberVericesInCluster++;
+                            });
+
+                            if (numberVericesInCluster === 1)
+                                tmpEdge['partiallyInCluster'] = true;
                         }
                     }
                     
-                    
+                    collapsedCluster.originalVertices.push(originalVertex);
                 }
 
                 currentCluster.layering[currentLayer] = [collapsedClusterLayer];
@@ -535,6 +784,7 @@ function inhale(graph) {
 
         this.vertices = collapsedCluster.collapsedVertices;
         this.edges = collapsedCluster.collapsedEdges;
+        this['originalEdges'] = collapsedCluster.originalEdges;
 
     });
 
@@ -553,9 +803,68 @@ function collapsedEdgeAlreadyExists(collapsedEdges,edge) {
     return findEdge;
 };
 
-function exhaleCluster(graph) {
+function exhale(graph) {
+    $.each(graph.subgraphs, function () {
 
+        var clusterBoxSize = getClusterBoxSize(this),
+            firstClusterVertex = this.vertices[0],
+            clusterXCoordinate = firstClusterVertex.xCoordinate;
+            
+        $.each(graph.vertices, function () {
+            if (this.cluster !== firstClusterVertex.cluster && this.xCoordinate > firstClusterVertex.xCoordinate) {
+                this.xCoordinate  += clusterBoxSize.clusterXSpan;
+            }
+        });
+
+        this.vertices = clusterBoxSize.clusterOriginalVertices;
+
+        $.each(this.vertices, function () {
+            this.xCoordinate = clusterXCoordinate + this.clusterxCoordinate - clusterBoxSize.left;
+        });
+
+        $.merge(graph.vertices, this.vertices);
+
+        this.edges = this.originalEdges;
+
+    });
 };
+
+function getClusterBoxSize(cluster) {
+    var left = 100000000,
+        right = -100000000,
+        clusterOriginalVertices = [];
+
+    $.each(cluster.vertices, function () {
+
+        if (this.originalVerticesInCluster !== undefined)
+        {
+            var collapsedVertex = this;
+            $.each(this.originalVerticesInCluster, function () {
+                clusterOriginalVertices.push(this);
+                if (this.clusterxCoordinate < left)
+                    left = this.clusterxCoordinate;
+                if (this.clusterxCoordinate > right)
+                    right = this.clusterxCoordinate;
+                if (this.xCoordinate) {
+                    this.xCoordinate = this.clusterxCoordinate;
+                    this.layer = collapsedVertex.layer;
+                }
+                    
+            });
+        }
+        else
+        {
+            clusterOriginalVertices.push(this);
+            if (this.clusterxCoordinate < left)
+                left = this.clusterxCoordinate;
+            if (this.clusterxCoordinate > right)
+                right = this.clusterxCoordinate;
+        }
+
+    });
+
+    return { clusterOriginalVertices: clusterOriginalVertices, clusterXSpan: (right - left),left:left,right:right };
+}
 
 /************************ End of cluster breathing phase *****************************/
 
@@ -739,7 +1048,7 @@ function constructClusticGraph(dummies, subgraphs, sublayouts, subgraphKeys, hig
     //Merge all vertices and edges from subgraphs with the original sets
     $.each(graph.subgraphs, function () {
         $.merge(graph.vertices, this.vertices);
-        $.merge(graph.edges, this.edges);
+        //$.merge(graph.edges, this.edges);
     });
         
 
@@ -773,13 +1082,13 @@ function constructClusticGraph(dummies, subgraphs, sublayouts, subgraphKeys, hig
     var verticesUnderConstraints = removeAndStoreVerticesUnderConstraints(graph, 'x');
 
     //Step 3.1 - Edge crossing minimization
-    edgeCrossingMinimization(graph);
+    clusticEdgeCrossingMinimization(graph);
 
     //Step 3.2 - Reintroduce removed vertices back into the vertices set
     reIntroduceStaticConstraintsVertices(graph, verticesUnderConstraints, 'x');
 
     //Step 4 - x-coordinate assignment
-    edgeStraightening(graph);
+    clusticEdgeStraightening(graph);
 
     //Step 5 - Reverse vertices layering so bottom is top and top is bottom
     /*  for (var i = 0; i < graph.vertices.length; i++) {
@@ -807,11 +1116,76 @@ function constructClusticGraph(dummies, subgraphs, sublayouts, subgraphKeys, hig
         }
     }
 
+    for (var i = 0; i < graph.vertices.length; i++) {
+        if (graph.vertices[i].cluster !== undefined) {
+            graph.vertices.splice(i, 1);
+            i--;
+        }
+    }
 
-    $.merge(graph.edges, removedOriginalEdges);
+    exhale(graph);
+    
+
+    for (var i = 0; i < graph.edges.length; i++) {
+        if (graph.edges[i].partOfCollapsedCluster) {
+            graph.edges.splice(i, 1);
+            i--;
+        }
+
+        else if(graph.edges[i].partiallyInCluster){
+            graph.edges.splice(i, 1);
+            i--;
+        }
+            
+    }
+
+    removeDuplicateEdges(graph.edges)
+
+    var longPartialInClusterEdges = [];
+    $.each(removedOriginalEdges, function () {
+        if (this.partiallyInCluster)
+        {
+            var currentVertex = this;
+            $.each(this.dummies.dummyEdges, function () {
+                if (this.originalEndVertex) {
+                    currentVertex.to = this.originalEndVertex;
+                    this.to = this.originalEndVertex;
+                }
+                    
+            });
+
+            longPartialInClusterEdges.push(this);
+        }
+       
+    });
+
+    $.each(graph.subgraphs, function () {
+        //$.merge(graph.vertices, this.vertices);
+        
+        //Step 5.2 - Remove all dummy edges
+        for (var i = 0; i < this.edges.length; i++) {
+            var currentEdge = this.edges[i],
+                edgeAlreadyExists = false;
+            $.each(longPartialInClusterEdges, function () {
+                if (this.from === currentEdge.from && this.to === currentEdge.to)
+                    edgeAlreadyExists = true;
+            });
+
+            if (!edgeAlreadyExists && !currentEdge.partOfCollapsedCluster)
+                graph.edges.push(currentEdge);
+        }
+    });
+
+    $.each(longPartialInClusterEdges, function () {
+        $.each(this.dummies.dummyEdges, function () {
+            graph.edges.push(this);
+        });
+        
+    });
+    //$.merge(graph.edges, removedOriginalEdges);
 
     //Step 5.3 - Reverse fas edges back to original direction
-    removeDuplicateEdges(graph.edges)
+    // removeDuplicateEdges(graph.edges)
 
     //Merge all fa sets original sets
     $.each(graph.subgraphs, function () {
@@ -820,10 +1194,78 @@ function constructClusticGraph(dummies, subgraphs, sublayouts, subgraphKeys, hig
         $.merge(selfLoopEdges, this.selfLoops);
     });
 
-    var reversedFas = reverseEdgesInFas(fas[1]);
-    $.merge(graph.edges, fas[1]);
+    for (var i = 0; i < fas[1].length; i++) {
+        var fasEdge = fas[1][i];
+        for (var j = 0; j < longPartialInClusterEdges.length; j++) {
+            if (fasEdge.from === longPartialInClusterEdges[j].from && fasEdge.to === longPartialInClusterEdges[j].to) {
+                fas[1].splice(i, 1);
+                i--;
+            }
+                
+        }
+    }
 
-    //Step 5.4 - Add all two loop, self loop edges and all edges replacing dummy edges back to the edge set
+    
+
+    for (var i = 0; i < fas[1].length; i++) {
+        if (fas[1][i].dummies !== undefined) {
+            $.each(fas[1][i].dummies.dummyEdges, function () {
+                graph.edges.push(this);
+            });
+            fas[1].splice(i, 1);
+            i--;
+        }
+    }
+
+
+
+    var tmpTwoLoopEdge = undefined;
+
+    for (var i = 0; i < twoLoopEdges.length; i++) {
+        var currentTwoLoopEdge = twoLoopEdges[i];
+        $.each(graph.edges, function () {
+            if (currentTwoLoopEdge.from === this.to && currentTwoLoopEdge.to === this.from) {
+                tmpTwoLoopEdge = $.extend(true, {}, this);
+                tmpTwoLoopEdge['index'] = i;
+            }
+        });
+    }
+
+    for (var i = 0; i < twoLoopEdges.length; i++) {
+        var currentTwoLoopEdge = twoLoopEdges[i];
+        $.each(longPartialInClusterEdges, function () {
+            if (currentTwoLoopEdge.from === this.to && currentTwoLoopEdge.to === this.from) {
+                tmpTwoLoopEdge = $.extend(true, {}, this);
+                tmpTwoLoopEdge['index'] = i;
+            }
+        });
+    }
+
+    if (tmpTwoLoopEdge !== undefined) {
+        if (tmpTwoLoopEdge.dummies !== undefined) {
+            $.each(tmpTwoLoopEdge.dummies.dummyEdges, function () {
+                var tmpFrom = this.from,
+                    tmpTo = this.to;
+
+                this.from = tmpTo;
+                this.to = tmpFrom;
+
+                graph.edges.push(this);
+            })
+            twoLoopEdges.splice(tmpTwoLoopEdge.index, 1);
+        }
+        else {
+            graph.edges.push(currentTwoLoopEdge);
+            twoLoopEdges.splice(tmpTwoLoopEdge.index, 1);
+        }
+    }
+
+    
+
+    $.merge(graph.edges, fas[1]);
+    var reversedFas = reverseAllEdges(graph.edges);
+
+    //Step 5.4 - Add all two loop, self loop edges and all edges replacing dummy edges back to the edge set    
 
     $.merge(graph.edges, twoLoopEdges);
     $.merge(graph.edges, selfLoopEdges);
@@ -1353,6 +1795,23 @@ function reverseEdgesInFas(edges) {
     });
 }
 
+function reverseAllEdges(edges) {
+    $.each(edges, function () {
+        
+        if (this.reversed) {
+            //Store original values
+            var to = this.to;
+            var from = this.from;
+
+            //Override original values with their reverse
+            this.to = from;
+            this.from = to;
+
+            this.reversed = false
+        }
+    });
+};
+
 function getHighestVerticeNumber(highestVertexNumber,value) {
     if (value !== undefined)
         highestVertexNumber.highestNumber = value;
@@ -1457,7 +1916,7 @@ function clusticLongestPath(graph, type) {
             removeVertex("source", graph, currentMaxVertex);
 
             if (type === 'clustic' && currentMaxVertex.cluster !== undefined) {
-                assignAllVerticesInClusterToLayer(graph, currentMaxVertex, layering, alreadyPicked);
+                currentLayer += assignAllVerticesInClusterToLayer(graph, currentMaxVertex, layering, alreadyPicked);
             }
         }
 
@@ -1479,7 +1938,12 @@ function clusticLongestPath(graph, type) {
 
 }
 
-function assignAllVerticesInClusterToLayer(graph, currentMaxVertex, layering,alreadyPicked) {
+function assignAllVerticesInClusterToLayer(graph, currentMaxVertex, layering, alreadyPicked) {
+
+    var lowestLayer = 0,
+        tmpLayers = {};
+
+
     $.each(graph.subgraphs[currentMaxVertex.cluster].vertices, function () {
         if (this.label !== currentMaxVertex.label)
         {
@@ -1487,13 +1951,46 @@ function assignAllVerticesInClusterToLayer(graph, currentMaxVertex, layering,alr
 
             alreadyPicked.push(this);
 
-            if (layering[this.layer] === undefined)
-                layering[this.layer] = [this];
+            if (this.layer < lowestLayer) {
+                lowestLayer = this.layer;
+            }
+            if (this.layer < 0)
+            {
+                if (tmpLayers[this.layer] === undefined)
+                {
+                    tmpLayers[this.layer] = [this]
+                }
+                else
+                {
+                    tmpLayers[this.layer].push(this);
+                }
+            }
             else
-                layering[this.layer].push(this)
+            {
+                if (layering[this.layer] === undefined)
+                    layering[this.layer] = [this];
+                else
+                    layering[this.layer].push(this)
+            }
+            
             removeVertex("source", graph, this);
         }
     });
+    var howManyNewLayers = 0 - lowestLayer;
+    if (lowestLayer < 0) {
+        
+        for (var i = lowestLayer; i < 0; i++) {
+            layering.splice(0, 0, tmpLayers[i]);
+        }
+        for (var j = 0; j < layering.length;j++){
+            $.each(layering[j],function(){
+                this.layer += howManyNewLayers;
+            });
+        }
+        currentMaxVertex.layer += howManyNewLayers;
+        
+    }
+    return howManyNewLayers;
 };
 
 function checkMostEdgesInPreviousLayer(graph, previousLayer) {
@@ -1710,8 +2207,13 @@ function makeProperLayering(graph, type, highestNumberVertex) {
 
                 else {
                     tmpEdge = createDummyEdge(graph, dummyVertices[index2 - 1], to);
+                    if (currentEdge.originalEdge !== undefined)
+                        tmpEdge['originalEndVertex'] = currentEdge.originalEdge.to;
                     //updateAdjacencyList(graph, tmpDummies[index2-1], to);
                 }
+                if (currentEdge.partiallyInCluster)
+                    tmpEdge['partiallyInCluster'] = true;
+                tmpEdge['reversed'] = currentEdge.reversed;
                 dummyEdges.push(tmpEdge);
             };
             currentEdge['dummies'] = { dummyVertices: dummyVertices, dummyEdges: dummyEdges };
@@ -1721,7 +2223,8 @@ function makeProperLayering(graph, type, highestNumberVertex) {
             index--;
 
         }
-
+        else if(currentEdge.partiallyInCluster && !to.dummy && !from.dummy)
+            delete currentEdge.partiallyInCluster;
 
     };
     return oldEdges;
@@ -1790,6 +2293,17 @@ function edgeCrossingMinimization(graph) {
     };
 };
 
+function clusticEdgeCrossingMinimization(graph) {
+    setWithinLayerXCoordinate(graph);
+
+    //Until convergence to some value
+    var convergenceValue = 100;
+    for (var i = 0; i < convergenceValue; i++) {
+        clusticSweepDownUp(graph);
+        clusticSweepUpDown(graph);
+    };
+};
+
 function barycenter(graph, currentLayer, incidentMatrix) {
 
     for (var row = 0; row < incidentMatrix.length; row++) {
@@ -1808,6 +2322,35 @@ function barycenter(graph, currentLayer, incidentMatrix) {
             graph.layering[currentLayer][row]['barycenter'] = colValue / numberOfEdges;
             graph.layering[currentLayer][row]['xCoordinate'] = colValue / numberOfEdges;
         }
+    }
+};
+
+function clusticBarycenter(graph, currentLayer, incidentMatrix) {
+
+    for (var row = 0; row < incidentMatrix.length; row++) {
+        var colValue = 0, numberOfEdges = 0;
+        for (var col = 0; col < incidentMatrix[row].length; col++) {
+            if (incidentMatrix[row][col] === 1) {
+                colValue += (col + 1);
+                numberOfEdges++;
+            }
+        }
+
+        //Prevent NaN
+        if (colValue === 0)
+            graph.layering[currentLayer][row]['barycenter'] = graph.layering[currentLayer][row]['xCoordinate'];
+        else {
+            graph.layering[currentLayer][row]['barycenter'] = colValue / numberOfEdges;
+            graph.layering[currentLayer][row]['xCoordinate'] = colValue / numberOfEdges;
+        }
+
+        if (graph.layering[currentLayer][row].cluster !== undefined) {
+            $.each(graph.subgraphs[graph.layering[currentLayer][row].cluster].vertices, function () {
+                this['barycenter'] = graph.layering[currentLayer][row]['barycenter'];
+                this['xCoordinate'] = this.barycenter;
+            });
+        }
+
 
     }
 };
@@ -1816,6 +2359,22 @@ function removeBarycenter(graph, currentLayer) {
     for (var row = 0; row < graph.layering[currentLayer].length; row++) {
         delete graph.layering[currentLayer][row]['barycenter'];
     };
+}
+
+function clusticRemoveBarycenter(graph, currentLayer) {
+    for (var row = 0; row < graph.layering[currentLayer].length; row++) {
+        if (graph.layering[currentLayer][row] === undefined)
+            delete graph.layering[currentLayer][row]['barycenter'];
+    };
+}
+
+function removeBarycenterAllLayers(graph) {
+    $.each(graph.layering, function () {
+        for (var row = 0; row < this.length; row++) {
+            delete this[row]['barycenter'];
+        };
+    });
+    
 }
 
 function sweepDownUp(graph) {
@@ -1827,12 +2386,31 @@ function sweepDownUp(graph) {
         removeBarycenter(graph, currentLayer);
     };
 };
+function clusticSweepDownUp(graph) {
+    //Sweep down -> up
+    for (var currentLayer = 1; currentLayer < graph.layering.length; currentLayer++) {
+        var incidentMatrix = fillIncidentMatrix(graph, graph.layering[currentLayer], graph.layering[currentLayer - 1]);
+        clusticBarycenter(graph, currentLayer, incidentMatrix);
+        graph.layering[currentLayer].sort(sortingOnBarycenter);
+        removeBarycenter(graph, currentLayer);
+    };
+};
 
 function sweepUpDown(graph) {
     //Sweep up -> down
     for (var currentLayer = graph.layering.length - 2; currentLayer > -1; currentLayer--) {
         var incidentMatrix = fillIncidentMatrix(graph, graph.layering[currentLayer], graph.layering[currentLayer + 1]);
         barycenter(graph, currentLayer, incidentMatrix);
+        graph.layering[currentLayer].sort(sortingOnBarycenter);
+        removeBarycenter(graph, currentLayer);
+    };
+};
+
+function clusticSweepUpDown(graph) {
+    //Sweep up -> down
+    for (var currentLayer = graph.layering.length - 2; currentLayer > -1; currentLayer--) {
+        var incidentMatrix = fillIncidentMatrix(graph, graph.layering[currentLayer], graph.layering[currentLayer + 1]);
+        clusticBarycenter(graph, currentLayer, incidentMatrix);
         graph.layering[currentLayer].sort(sortingOnBarycenter);
         removeBarycenter(graph, currentLayer);
     };
@@ -1900,6 +2478,21 @@ function edgeStraightening(graph) {
 
 };
 
+function clusticEdgeStraightening(graph) {
+    //Set x-coordinate of all vertices in the graph
+    setWithinLayerXCoordinate(graph);
+
+    //Until convergence to some value
+    clusticSweepXCoordinateDownUp(graph);
+    removeBarycenterAllLayers(graph);
+    clusticSweepXCoordinateUpDown(graph);
+    removeBarycenterAllLayers(graph);
+    clusticSweepXCoordinateDownUp(graph);
+    removeBarycenterAllLayers(graph);
+    clusticSweepXCoordinateUpDown(graph);
+
+};
+
 function setWithinLayerXCoordinate(graph) {
     for (var layer = 0; layer < graph.layering.length; layer++) {
         for (var positionInLayer = 0; positionInLayer < graph.layering[layer].length; positionInLayer++) {
@@ -1949,6 +2542,30 @@ function sweepXCoordinateDownUp(graph) {
     };
 };
 
+function clusticSweepXCoordinateDownUp(graph) {
+    //Sweep down -> up
+    for (var currentLayer = 1; currentLayer < graph.layering.length; currentLayer++) {
+
+        //Get incident matrix for barycenter calculation
+        var incidentMatrix = fillIncidentMatrix(graph, graph.layering[currentLayer], graph.layering[currentLayer - 1]);
+
+        //Set priorities of the current layer
+        setPriority(graph, currentLayer, 'downToUp');
+
+        //Set the Barycenters of the current layer
+        clusticXCoordinateBarycenter(graph, currentLayer, incidentMatrix, graph.layering[currentLayer - 1], 'downToUp');
+
+        //Copy the current layer into a new set for temporary removal
+        var tmpCurrentLayer = jQuery.extend(true, [], graph.layering[currentLayer]);
+
+        //Assign x-coordinates to vertices in current layer
+        clusticSetXCoordinate(graph, tmpCurrentLayer, graph.layering[currentLayer]);
+
+        //Remove Barycenter value from current layer
+        clusticRemoveBarycenter(graph, currentLayer);
+    };
+};
+
 function sweepXCoordinateUpDown(graph) {
     //Sweep up -> down
     for (var currentLayer = graph.layering.length - 2; currentLayer > -1; currentLayer--) {
@@ -1972,6 +2589,30 @@ function sweepXCoordinateUpDown(graph) {
     };
 };
 
+
+function clusticSweepXCoordinateUpDown(graph) {
+    //Sweep up -> down
+    for (var currentLayer = graph.layering.length - 2; currentLayer > -1; currentLayer--) {
+        //Get incident matrix for barycenter calculation
+        var incidentMatrix = fillIncidentMatrix(graph, graph.layering[currentLayer], graph.layering[currentLayer + 1]);
+
+        //Set priorities of the current layer
+        setPriority(graph, currentLayer, 'upToDown');
+
+        //Set the Barycenters of the current layer
+        clusticXCoordinateBarycenter(graph, currentLayer, incidentMatrix, graph.layering[currentLayer + 1], 'upToDown');
+
+        //Copy the current layer into a new set for temporary removal
+        var tmpCurrentLayer = jQuery.extend(true, [], graph.layering[currentLayer]);
+
+        //Assign x-coordinates to vertices in current layer
+        clusticSetXCoordinate(graph, tmpCurrentLayer, graph.layering[currentLayer]);
+
+        //Remove Barycenter value from current layer
+        clusticRemoveBarycenter(graph, currentLayer);
+    };
+};
+
 function xCoordinateBarycenter(graph, currentLayer, incidentMatrix, fixedLayer, type) {
 
     for (var row = 0; row < incidentMatrix.length; row++) {
@@ -1991,6 +2632,36 @@ function xCoordinateBarycenter(graph, currentLayer, incidentMatrix, fixedLayer, 
         else
             graph.layering[currentLayer][row]['barycenter'] = Math.round(colValue / numberOfEdges);
     }
+};
+
+function clusticXCoordinateBarycenter(graph, currentLayer, incidentMatrix, fixedLayer, type) {
+
+    for (var row = 0; row < incidentMatrix.length; row++) {
+        var colValue = 0, numberOfEdges = 0;
+        for (var col = 0; col < incidentMatrix[row].length; col++) {
+            if (incidentMatrix[row][col] === 1) {
+                colValue += fixedLayer[col].xCoordinate;
+                numberOfEdges++;
+            }
+        }
+
+        var currentVertices = graph.layering[currentLayer][row];
+        //Prevent NaN
+        if (colValue === 0 && numberOfEdges === 0 && currentVertices['barycenter'] === undefined)
+            currentVertices['barycenter'] = currentVertices.xCoordinate;
+        else if ((colValue / numberOfEdges) % 1 !== 0 && checkDummyNeighbors(graph, currentVertices, type, (colValue / numberOfEdges)) && currentVertices['barycenter'] === undefined)
+            currentVertices['barycenter'] = Math.floor(colValue / numberOfEdges);
+        else if(currentVertices['barycenter'] === undefined)
+            currentVertices['barycenter'] = Math.round(colValue / numberOfEdges);
+
+        if (currentVertices.cluster !== undefined) {
+            $.each(graph.subgraphs[currentVertices.cluster].vertices, function () {
+                this['barycenter'] = currentVertices['barycenter'];
+            });
+        }
+    }
+
+
 };
 
 function checkDummyNeighbors(graph, currentVertex, type, barycenter) {
@@ -2055,6 +2726,48 @@ function setXCoordinate(graph, tmpCurrentLayer, currentLayer) {
         //Store the x-coordinate of the current vertex and remove it from the temporary list
         currentLayer[currentVertex.layerX].xCoordinate = mk[currentVertex.layerX];
         currentVertex['used'] = true;
+    }
+};
+
+function clusticSetXCoordinate(graph, tmpCurrentLayer, currentLayer) {
+
+    var mk = [];
+
+    for (var initialXCoordinate = 0; initialXCoordinate < tmpCurrentLayer.length; initialXCoordinate++) {
+        mk.push(tmpCurrentLayer[initialXCoordinate].xCoordinate);
+    }
+
+    for (var current = 0; current < tmpCurrentLayer.length; current++) {
+
+        var currentHigh = -1,
+        currentVertex = undefined;
+
+        for (var initialXCoordinate = 0; initialXCoordinate < tmpCurrentLayer.length; initialXCoordinate++) {
+            if (!tmpCurrentLayer[initialXCoordinate].used && tmpCurrentLayer[initialXCoordinate].priority > currentHigh) {
+                currentHigh = tmpCurrentLayer[initialXCoordinate].priority;
+                currentVertex = tmpCurrentLayer[initialXCoordinate];
+            }
+        }
+
+        //Is the vertex placed on the right side of its Barycenter
+        if ((currentVertex.barycenter - mk[currentVertex.layerX]) < 0) {
+            leftOfItsBarycenter(currentVertex, tmpCurrentLayer, mk);
+        }
+            //On the left side of its Barycenter
+        else if ((currentVertex.barycenter - mk[currentVertex.layerX]) > 0) {
+            rightOfItsBarycenter(graph, currentVertex, tmpCurrentLayer, mk);
+        }
+
+        //Store the x-coordinate of the current vertex and remove it from the temporary list
+        currentLayer[currentVertex.layerX].xCoordinate = mk[currentVertex.layerX];
+        currentVertex['used'] = true;
+
+        if (currentVertex.cluster !== undefined && currentLayer[currentVertex.layerX].barycenter !== currentLayer[currentVertex.layerX].xCoordinate) {
+            $.each(graph.subgraphs[currentVertex.cluster].vertices, function () {
+                if(currentVertex.label !== this.label)
+                    this.barycenter = currentLayer[currentVertex.layerX].xCoordinate;
+            });
+        }
     }
 };
 

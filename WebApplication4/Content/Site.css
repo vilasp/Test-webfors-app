@@ -565,7 +565,7 @@ tr.pager td {
 #drawing-area,#drawing-area2{
     //background: url(/Images/dotted_grid_resized.gif) repeat;
     background-color:white;
-    height: 768px;
+    height: 2000px;
     width: 100%;
     position:relative;
 }
@@ -644,13 +644,13 @@ a:active {
 }
 
 .label {
-  font-size:13px; 
+  font-size:8px; 
   padding:8px;
   padding:8px;
 }
 
 .component { 
-  width:40px;
+  width:auto;
   border:1px solid #346789; 
   border-radius:0.5em;
   opacity:0.8; 
@@ -658,7 +658,7 @@ a:active {
   background-color:white;
   color:black;
   padding:0.5em;   
-  font-size:0.8em;
+  font-size:8px;
   font-weight:bold;
   display:inline-block;
   position:absolute;
@@ -677,6 +677,10 @@ a:active {
  
 .cluster{
     border: 3px solid #7AB02C;
+}
+
+.marked {
+    background-color:#7AB02C;
 }
 
 .dummy{
